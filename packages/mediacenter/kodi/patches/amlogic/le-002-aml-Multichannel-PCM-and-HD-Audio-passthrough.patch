@@ -30,7 +30,7 @@ index d66993a..b3a32ad 100644
 -#if defined(HAS_LIBAMCODEC)
 -  if (aml_present())
 +
-+  if (device.find("AML-M8AUDIO") != std::string::npos)
++  if (device.find("M8AUDIO") != std::string::npos)
    {
 +    int aml_digital_codec = 0;
 +
