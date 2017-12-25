@@ -30,9 +30,14 @@ PKG_SHORTDESC="Amlogic Linux FD628 Driver"
 PKG_LONGDESC="Amlogic Linux FD628 Driver"
 PKG_TOOLCHAIN="manual"
 
+make_target() {
+  echo "$CC $CFLAGS -Wall $LDFLAGS -lm -lpthread -o FD628Service FD628Service.c"
+  $CC $CFLAGS -Wall $LDFLAGS -lm -lpthread -o FD628Service FD628Service.c
+}
+
 makeinstall_target() {
   mkdir -p $INSTALL/usr/sbin
-    cp $PKG_DIR/sources/fd628 $INSTALL/usr/sbin/fd628
+    cp FD628Service $INSTALL/usr/sbin/FD628Service
 
   mkdir -p $INSTALL/$(get_full_module_dir)/$PKG_NAME
     cp $PKG_DIR/sources/aml_linux_fd628.ko $INSTALL/$(get_full_module_dir)/$PKG_NAME
