@@ -1,19 +1,45 @@
-# LibreELEC
+# LibreELEC-AML
 
-LibreELEC is a 'Just enough OS' Linux distribution for running the award-winning [Kodi](https://kodi.tv) software on popular mediacentre hardware. LibreELEC is a conservative fork of the popular [OpenELEC](http://openelec.tv) project with a stronger focus on pre-release testing and post-release change management. Further information on the project can be found on the [LibreELEC website](https://libreelec.tv).
+This GitHub repository is a fork of [LibreELEC](https://github.com/LibreELEC) that will allow you to build LibreELEC for Amlogic based devices.
 
-**Issues & Support**
+## Getting Started
 
-Please report issues via the [LibreELEC forum: Bug Reports](https://forum.libreelec.tv/forum-35.html). Please ask support questions in the [LibreELEC forum: Help & Support](https://forum.libreelec.tv/forum-3.html) or ask a member of project staff in the #libreelec IRC channel on Freenode.
+There is an excellent guide available [here](https://wiki.libreelec.tv/compile) that contains all the information you need to be able to build LibreELEC and setup a build enviroment.
 
-**Donations**
+### Supported Devices
 
-Contributions towards current project funding goals can be sent via PayPal to donations@libreelec.tv
+Currently devices with the S905 and S912 SoC are supported.
 
-**License**
+### Compiling
 
-LibreELEC original code is released under [GPLv2](https://www.gnu.org/licenses/gpl-2.0.html).
+To start building an example is listed below.
 
-**Copyright**
+```
+PROJECT=S905 ARCH=arm make image
+```
 
-As LibreELEC includes code from many upstream projects it includes many copyright owners. LibreELEC makes NO claim of copyright on any upstream code. However all original LibreELEC authored code is copyright LibreELEC.tv. Patches to upstream code have the same license as the upstream project, unless specified otherwise. For a complete copyright list please checkout the source code to examine license headers. Unless expressly stated otherwise all code submitted to the LibreELEC project (in any form) is licensed under [GPLv2](https://www.gnu.org/licenses/gpl-2.0.html) and copyright is donated to LibreELEC.tv. This approach allows the project to stay manageable in the long term by giving us freedom to maintain the code as part of the whole without the management overhead of preserving contact with every submitter, e.g. GPLv3. You are absolutely free to retain copyright. To retain copyright simply add a copyright header to each submitted code page. If you submit code that is not your own work it is your responsibility to place a header stating the copyright.
+### Installing
+
+There is a step by step guide available [here](https://forum.libreelec.tv/thread/5556-howto-faq-install-community-builds-on-s905-s905d-s905w-s905x-s912-device/).
+
+### Contributing
+
+You can contribute to the project by sending a [pull request](https://github.com/LibreELEC-AML/LibreELEC.tv/pulls) via GitHub.
+
+### Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/LibreELEC-AML/LibreELEC.tv/tags). 
+
+## Authors
+
+* **Mateusz Krzak** - *Initial work on LE8.2 branch* - [kszaq](https://github.com/kszaq)
+* **Adam Green** - *Initial work for S905 on LE9.0 branch* - [adamg88](https://github.com/adamg88)
+* **afl1** - *Initial work for S912 on LE9.0 branch and DVB support* - [afl1](https://github.com/afl1)
+* **Alexandr Surkov** - *Work on libamcodec* - [surkovalex](https://github.com/surkovalex)
+* **John Galt** - *HDR support on Kernel* - [RealJohnGalt](https://github.com/RealJohnGalt)
+
+See also the list of [contributors](https://github.com/LibreELEC-AML/LibreELEC.tv/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the GPLv2 License - see the [here](https://www.gnu.org/licenses/gpl-2.0.html) for details.
