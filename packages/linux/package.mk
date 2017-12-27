@@ -73,14 +73,14 @@ if [ "$BUILD_ANDROID_BOOTIMG" = "yes" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET mkbootimg:host"
 fi
 
-if [ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ]; then
+if [ "$PROJECT" = "Amlogic" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET dvb_tv-aml"
 fi
 
 post_unpack() {
 
   # Amlogic DVB driver
-  if [ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ]; then
+  if [ "$PROJECT" = "Amlogic" ]; then
     scripts/unpack dvb_tv-aml
     DVB_TV_AML_DIR="$(get_build_dir dvb_tv-aml)"
     if [ -d "$DVB_TV_AML_DIR" ]; then
@@ -278,7 +278,7 @@ post_install() {
     ln -sf /storage/.config/firmware/ $INSTALL/$(get_full_firmware_dir)/updates
 
   # WeTek DVB driver
-  if [ "$PROJECT" = "S905" ]; then
+  if [ "$DEVICE" = "S905" ]; then
     WETEKDVB_DIR="$(get_build_dir wetekdvb)"
     if [ -d "$WETEKDVB_DIR" -a -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/dvb_tv/wetekplay.ko" ]; then
       cp -a "$WETEKDVB_DIR/wetekdvb.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/"

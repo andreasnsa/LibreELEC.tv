@@ -33,7 +33,7 @@ get_graphicdrivers
 
 PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET dbus"
 
-if [ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ]; then
+if [ "$PROJECT" = "Amlogic" ]; then
   PKG_PATCH_DIRS="amlogic"
 fi
 

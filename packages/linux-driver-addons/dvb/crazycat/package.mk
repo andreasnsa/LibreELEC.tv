@@ -37,7 +37,7 @@ PKG_ADDON_NAME="DVB drivers for TBS (CrazyCat)"
 PKG_ADDON_TYPE="xbmc.service"
 PKG_ADDON_VERSION="${ADDON_VERSION}.${PKG_REV}"
 
-if [ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ]; then
+if [ "$PROJECT" = "Amlogic" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET dvb_tv-aml"
 fi
 
@@ -54,7 +54,7 @@ make_target() {
     if [ -f $PKG_DIR/config/generic.config ]; then
       cp $PKG_DIR/config/generic.config v4l/.config
     fi
-  elif [ "$PROJECT" != "S905" ] && [ "$PROJECT" != "S912" ]; then
+  elif [ "$PROJECT" != "Amlogic" ]; then
     if [ -f $PKG_DIR/config/usb.config ]; then
       cp $PKG_DIR/config/usb.config v4l/.config
     fi
@@ -76,13 +76,13 @@ make_target() {
     fi
     
     # Amlogic DVB drivers
-    if [ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ]; then
+    if [ "$PROJECT" = "Amlogic" ]; then
       DVB_TV_AML_DIR="$(get_build_dir dvb_tv-aml)"
       if [ -d "$DVB_TV_AML_DIR" ]; then
         cp -a "$DVB_TV_AML_DIR" "linux/drivers/media/dvb_tv"
         echo "obj-y += dvb_tv/" >> "linux/drivers/media/Makefile"
       fi
-      if [ "$PROJECT" = "S905" ]; then
+      if [ "$DEVICE" = "S905" ]; then
         echo "obj-y += amlogic/dvb_tv/" >> "linux/drivers/media/Makefile"
         WETEKDVB_DIR="$(get_build_dir wetekdvb)"
         if [ -d "$WETEKDVB_DIR" ]; then

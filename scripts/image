@@ -179,7 +179,7 @@ $SCRIPTS/install network
 [ "$REMOTE_SUPPORT" = "yes" ] && $SCRIPTS/install remote
 
 # Modified u-boot tools for Amlogic devices
-[ "$PROJECT" = "S905" ] || [ "$PROJECT" = "S912" ] && $SCRIPTS/install u-boot-tools-aml
+[ "$PROJECT" = "Amlogic" ] && $SCRIPTS/install u-boot-tools-aml
 
 # Virtual image creation support
 [ "$PROJECT" = "Generic" ] && $SCRIPTS/install virtual
