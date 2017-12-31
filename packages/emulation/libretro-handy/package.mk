@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-handy"
-PKG_VERSION="a4de67f"
-PKG_SHA256="c636d35dcfd922db51323964638461d7148b4e888d2ea4480c150de1c5ad8827"
+PKG_VERSION="b055dc6"
+PKG_SHA256="3d680936f02ae2763794a5aca92c95112979330b45434fb4f866fdf1dfc8d97d"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv3"
 PKG_SITE="https://github.com/libretro/libretro-handy"

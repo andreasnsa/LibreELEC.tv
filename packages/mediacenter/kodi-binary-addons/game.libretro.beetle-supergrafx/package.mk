@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="game.libretro.beetle-supergrafx"
-PKG_VERSION="2b2b35f"
-PKG_SHA256="8177eedadb0cd843b514b37d834b4073232b69053168068b46c0ca2f51ee35be"
-PKG_REV="104"
+PKG_VERSION="a554dd5"
+PKG_SHA256="38c081b3baab23ef603c11f08669ee13df293687840ea609f4ad07d1a2650e49"
+PKG_REV="105"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kodi-game/game.libretro.beetle-supergrafx"
