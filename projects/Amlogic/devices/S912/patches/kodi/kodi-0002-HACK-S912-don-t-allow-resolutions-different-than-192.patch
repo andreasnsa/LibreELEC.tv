@@ -1,0 +1,55 @@
+From af99281fa5134098c6a2f0c21794c5151f2b554b Mon Sep 17 00:00:00 2001
+From: kszaq <kszaquitto@gmail.com>
+Date: Thu, 11 Jan 2018 21:28:06 +0100
+Subject: [PATCH 2/2] [HACK] S912: don't allow resolutions different than
+ 1920x1080 framebuffer size
+
+---
+ xbmc/utils/AMLUtils.cpp | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/xbmc/utils/AMLUtils.cpp b/xbmc/utils/AMLUtils.cpp
+index c870f45..405b7cd 100644
+--- a/xbmc/utils/AMLUtils.cpp
++++ b/xbmc/utils/AMLUtils.cpp
+@@ -665,7 +665,8 @@ bool aml_probe_resolutions(std::vector<RESOLUTION_INFO> &resolutions)
+   {
+     if (((StringUtils::StartsWith(i->c_str(), "4k2k")) && (aml_support_h264_4k2k() > AML_NO_H264_4K2K)) || !(StringUtils::StartsWith(i->c_str(), "4k2k")))
+     {
+-      if (aml_mode_to_resolution(i->c_str(), &res))
++      if (aml_mode_to_resolution(i->c_str(), &res) && res.iWidth == 1920 && res.iHeight == 1080)
++      {
+         resolutions.push_back(res);
+ 
+       if (aml_has_frac_rate_policy())
+@@ -683,6 +684,7 @@ bool aml_probe_resolutions(std::vector<RESOLUTION_INFO> &resolutions)
+             break;
+         }
+       }
++      }
+     }
+   }
+   return resolutions.size() > 0;
+@@ -693,8 +695,8 @@ bool aml_get_preferred_resolution(RESOLUTION_INFO *res)
+   // check display/mode, it gets defaulted at boot
+   if (!aml_get_native_resolution(res))
+   {
+-    // punt to 720p if we get nothing
+-    aml_mode_to_resolution("720p", res);
++    // punt to 1080p if we get nothing
++    aml_mode_to_resolution("1080p60hz", res);
+   }
+ 
+   return true;
+@@ -723,8 +725,6 @@ bool aml_set_display_resolution(const RESOLUTION_INFO &res, std::string framebuf
+ 
+   SysfsUtils::SetString("/sys/class/display/mode", mode.c_str());
+ 
+-  aml_set_framebuffer_resolution(res, framebuffer_name);
+-
+   return true;
+ }
+ 
+-- 
+2.7.4
+

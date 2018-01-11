@@ -1,0 +1,70 @@
+From b8cb4eb79be0affd31c8de3286474f71aaab1f60 Mon Sep 17 00:00:00 2001
+From: kszaq <kszaquitto@gmail.com>
+Date: Thu, 11 Jan 2018 21:20:26 +0100
+Subject: [PATCH 1/2] WinSystemAmlogic: get rid of fbdev_window
+
+---
+ xbmc/windowing/amlogic/WinSystemAmlogic.cpp | 12 ------------
+ xbmc/windowing/amlogic/WinSystemAmlogic.h   |  2 +-
+ 2 files changed, 1 insertion(+), 13 deletions(-)
+
+diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
+index 4b81997..2697d28 100644
+--- a/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
++++ b/xbmc/windowing/amlogic/WinSystemAmlogic.cpp
+@@ -63,7 +63,6 @@ CWinSystemAmlogic::CWinSystemAmlogic()
+   }
+ 
+   m_nativeDisplay = EGL_NO_DISPLAY;
+-  m_nativeWindow = nullptr;
+ 
+   m_displayWidth = 0;
+   m_displayHeight = 0;
+@@ -82,10 +81,6 @@ CWinSystemAmlogic::CWinSystemAmlogic()
+ 
+ CWinSystemAmlogic::~CWinSystemAmlogic()
+ {
+-  if(m_nativeWindow)
+-  {
+-    m_nativeWindow = nullptr;
+-  }
+ }
+ 
+ bool CWinSystemAmlogic::InitWindowSystem()
+@@ -149,11 +144,6 @@ bool CWinSystemAmlogic::CreateNewWindow(const std::string& name,
+   m_stereo_mode = stereo_mode;
+   m_bFullScreen = fullScreen;
+ 
+-  fbdev_window *nativeWindow = new fbdev_window;
+-  nativeWindow->width = res.iWidth;
+-  nativeWindow->height = res.iHeight;
+-  m_nativeWindow = static_cast<EGLNativeWindowType>(nativeWindow);
+-
+   aml_set_native_resolution(res, m_framebuffer_name, stereo_mode);
+ 
+   if (!m_delayDispReset)
+@@ -171,8 +161,6 @@ bool CWinSystemAmlogic::CreateNewWindow(const std::string& name,
+ 
+ bool CWinSystemAmlogic::DestroyWindow()
+ {
+-  m_nativeWindow = nullptr;
+-
+   return true;
+ }
+ 
+diff --git a/xbmc/windowing/amlogic/WinSystemAmlogic.h b/xbmc/windowing/amlogic/WinSystemAmlogic.h
+index 29a3807..74eeb97 100644
+--- a/xbmc/windowing/amlogic/WinSystemAmlogic.h
++++ b/xbmc/windowing/amlogic/WinSystemAmlogic.h
+@@ -51,7 +51,7 @@ public:
+ protected:
+   std::string m_framebuffer_name;
+   EGLDisplay m_nativeDisplay;
+-  fbdev_window *m_nativeWindow;
++  EGLNativeWindowType m_nativeWindow = static_cast<EGLNativeWindowType>(NULL);
+ 
+   int m_displayWidth;
+   int m_displayHeight;
+-- 
+2.7.4
+
