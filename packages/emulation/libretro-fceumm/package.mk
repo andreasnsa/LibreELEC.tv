@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-fceumm"
-PKG_VERSION="221c1fa"
-PKG_SHA256="2e2bd4b224643f459526735fabc5e56d13c3036bef820f515b845ac15117d47a"
+PKG_VERSION="5d5b7e0"
+PKG_SHA256="20d8455eaf9e220fd0706b0ad8c16ca1af2abf0367f93a42517bbbc44132d41e"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv2"
 PKG_SITE="https://github.com/libretro/libretro-fceumm"
