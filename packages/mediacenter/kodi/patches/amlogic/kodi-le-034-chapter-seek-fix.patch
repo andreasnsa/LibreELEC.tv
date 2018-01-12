@@ -8,7 +8,7 @@ Subject: [PATCH] VideoPlayer: chapter seek fix
          FlushBuffers(start, true, true);
          int64_t beforeSeek = GetTime();
          offset = DVD_TIME_TO_MSEC(start) - static_cast<int>(beforeSeek);
-+        CLog::Log(LOGDEBUG, "VideoPlayer: SeekChapter:%d beforeSeek:%0.3f start:%0.3f",  msg.GetChapter(), beforeSeek / 1000.0, start / 1000000.0); 
++        CLog::Log(LOGDEBUG, LOGVIDEO, "VideoPlayer: SeekChapter:%d beforeSeek:%0.3f start:%0.3f",  msg.GetChapter(), beforeSeek / 1000.0, start / 1000000.0); 
          m_callback.OnPlayBackSeekChapter(msg.GetChapter());
        }
  
@@ -16,14 +16,14 @@ Subject: [PATCH] VideoPlayer: chapter seek fix
              mode.accurate = true;
              mode.trickplay = true;
              mode.sync = true;
-+            CLog::Log(LOGDEBUG, "VideoPlayer: Videostream seek: %d", mode.time); 
++            CLog::Log(LOGDEBUG, LOGVIDEO, "VideoPlayer: Videostream seek: %d", mode.time); 
              m_messenger.Put(new CDVDMsgPlayerSeek(mode));
            }
          }
          else
          {
            CloseStream(m_CurrentVideo, false);
-+          CLog::Log(LOGDEBUG, "VideoPlayer: Reopen Videostream: %d id:%d", st.demuxerId, st.id); 
++          CLog::Log(LOGDEBUG, LOGVIDEO, "VideoPlayer: Reopen Videostream: %d id:%d", st.demuxerId, st.id); 
            OpenStream(m_CurrentVideo, st.demuxerId, st.id, st.source);
            CDVDMsgPlayerSeek::CMode mode;
            mode.time = (int)GetTime();
@@ -31,44 +31,47 @@ Subject: [PATCH] VideoPlayer: chapter seek fix
            mode.accurate = true;
            mode.trickplay = true;
            mode.sync = true;
-+          CLog::Log(LOGDEBUG, "VideoPlayer: Videostream seek: %d", mode.time); 
++          CLog::Log(LOGDEBUG, LOGVIDEO, "VideoPlayer: Videostream seek: %d", mode.time); 
            m_messenger.Put(new CDVDMsgPlayerSeek(mode));
          }
        }
 diff --git a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-index 31019d5..70aeda8 100644
+index 3f4b364..84c9169 100644
 --- a/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
 +++ b/xbmc/cores/VideoPlayer/DVDDemuxers/DVDDemuxFFmpeg.cpp
-@@ -1147,6 +1147,7 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double *startpts)
+@@ -1146,10 +1146,11 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double *startpts)
    if (m_pFormatContext->start_time != (int64_t)AV_NOPTS_VALUE && !ismp3 && !m_bSup)
      seek_pts += m_pFormatContext->start_time;
  
-+  CLog::Log(LOGDEBUG, "CDVDDemuxFFmpeg::%s - seek pts:%0.3f backwards:%d start_time:%0.3f", __FUNCTION__, (double)seek_pts / AV_TIME_BASE, backwards, (double)(m_pFormatContext->start_time) / AV_TIME_BASE);
++  CLog::Log(LOGDEBUG, LOGVIDEO, "CDVDDemuxFFmpeg::%s - seek pts:%0.3f backwards:%d start_time:%0.3f", __FUNCTION__, (double)seek_pts / AV_TIME_BASE, backwards, (double)(m_pFormatContext->start_time) / AV_TIME_BASE);
    int ret;
    {
      CSingleLock lock(m_critSection);
-@@ -1180,11 +1179,28 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double *startpts)
+-    ret = av_seek_frame(m_pFormatContext, -1, seek_pts, backwards ? AVSEEK_FLAG_BACKWARD : 0);
++    ret = av_seek_frame(m_pFormatContext, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
+ 
+     // demuxer can return failure, if seeking behind eof
+     if (ret < 0 && m_pFormatContext->duration &&
+@@ -1177,11 +1178,27 @@ bool CDVDDemuxFFmpeg::SeekTime(double time, bool backwards, double *startpts)
    if(m_currentPts == DVD_NOPTS_VALUE)
      CLog::Log(LOGDEBUG, "%s - unknown position after seek", __FUNCTION__);
    else
 -    CLog::Log(LOGDEBUG, "%s - seek ended up on time %d", __FUNCTION__, (int)(m_currentPts / DVD_TIME_BASE * 1000));
--
 +  {
-+    CLog::Log(LOGDEBUG, "CDVDDemuxFFmpeg::%s - seek ended up on time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
-+    double diff = (double)seek_pts/AV_TIME_BASE - m_currentPts / DVD_TIME_BASE;
-+    if (diff > 2.0)
++    CLog::Log(LOGDEBUG, LOGVIDEO, "CDVDDemuxFFmpeg::%s - backward seek ended up on time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
++    ret = av_seek_frame(m_pFormatContext, -1, seek_pts, 0);
++    if (ret >= 0)
 +    {
-+      ret = av_seek_frame(m_pFormatContext, -1, seek_pts, 0);
-+      if (ret >= 0)
-+        UpdateCurrentPTS();
-+      CLog::Log(LOGDEBUG, "CDVDDemuxFFmpeg::%s - 2.seek ended up on time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
-+      double diff1 = (double)seek_pts/AV_TIME_BASE - m_currentPts / DVD_TIME_BASE;
-+      if (diff1 < -3.0)
++      double b_pts = m_currentPts;
++      UpdateCurrentPTS();
++      CLog::Log(LOGDEBUG, LOGVIDEO, "CDVDDemuxFFmpeg::%s - forward seek ended up on time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
++      if ((double)seek_pts/AV_TIME_BASE - b_pts / DVD_TIME_BASE < m_currentPts / DVD_TIME_BASE -  (double)seek_pts/AV_TIME_BASE)
 +      {
 +        ret = av_seek_frame(m_pFormatContext, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
 +        if (ret >= 0)
 +          UpdateCurrentPTS();
-+        CLog::Log(LOGDEBUG, "CDVDDemuxFFmpeg::%s - 3.seek ended up on time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
+ 
++        CLog::Log(LOGDEBUG, LOGVIDEO, "CDVDDemuxFFmpeg::%s - selected seek time %0.3fs", __FUNCTION__, m_currentPts / DVD_TIME_BASE);
 +      }  
 +    }  
 +  }
