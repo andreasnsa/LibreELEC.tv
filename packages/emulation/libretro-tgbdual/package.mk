@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-tgbdual"
-PKG_VERSION="a973b67"
-PKG_SHA256="4f2cf1245bac0da920f1efd6a4403e09d717a8a273883047dde61585788f6a20"
+PKG_VERSION="4e111be"
+PKG_SHA256="d16d9fd374519d32b3bbfd9a526aba31f137f194a95c0abe20632dad3fa59600"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv3"
 PKG_SITE="https://github.com/libretro/tgbdual-libretro"

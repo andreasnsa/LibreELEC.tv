@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-fmsx"
-PKG_VERSION="006d389"
-PKG_SHA256="a4070e3df21b563631f321db1c97d3811be2f3210221e1008ae4e7ebcec860a3"
+PKG_VERSION="7d19e66"
+PKG_SHA256="3bd047889ac95bf0d19a2abd07b96422a5a329d017c4eb6cd65999fe8200bacb"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv3"
 PKG_SITE="https://github.com/libretro/fmsx-libretro"

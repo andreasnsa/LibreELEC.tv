@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-beetle-vb"
-PKG_VERSION="5d999c6"
-PKG_SHA256="2c60cf67942fc316c69bbcd69c5700273b21cabb3d681fd10d9df92f04c06746"
+PKG_VERSION="9c683c2"
+PKG_SHA256="749efc530e5b9872a2df720e3ab94955752926083c981af5bd24bfb38bbf668c"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv2"
 PKG_SITE="https://github.com/libretro/beetle-vb-libretro"
