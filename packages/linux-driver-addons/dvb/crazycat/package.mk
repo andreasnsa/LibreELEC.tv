@@ -19,7 +19,7 @@
 PKG_NAME="crazycat"
 PKG_VERSION="2017-12-06"
 PKG_SHA256="779c7d42e5fd4dfac8f53654ce8af467d22a81b6c0b21e24f14aaaed033c6eb1"
-PKG_REV="100"
+PKG_REV="101"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/crazycat69/linux_media"
