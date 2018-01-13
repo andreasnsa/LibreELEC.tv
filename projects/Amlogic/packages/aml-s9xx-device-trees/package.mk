@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="aml-s9xx-device-trees"
-PKG_VERSION="9b108c3"
-PKG_SHA256="2ffcdb6f227a18345215938748727945ba734eda8ec9dd0d355a83e791dddd97"
+PKG_VERSION="e2af6ca"
+PKG_SHA256="2c901af9899d03962890a7c415c220c70a0fb94d4e79bef6845f364e96a40178"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kszaq/s905-device-trees"
 PKG_URL="https://github.com/LibreELEC-AML/s905-device-trees/archive/$PKG_VERSION.tar.gz"
