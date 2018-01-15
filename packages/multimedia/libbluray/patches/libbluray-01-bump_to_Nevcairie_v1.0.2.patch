@@ -1,1186 +1,861 @@
+From 7bbfda6b71ede9bddb3120ea6def3bd1c1c8e94b Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Mon, 4 Sep 2017 17:28:39 +0200
+Subject: [PATCH 01/14] Revert "Remove --disable-bdjava configure option"
+
+This reverts commit 415da3663a1ff2a935d4a36417f4f46bf2b947d2.
+---
+ Makefile.am            |   8 ++-
+ configure.ac           |  60 ++++++++++------
+ src/libbluray/bluray.c | 189 ++++++++++++++++++++++++++++++++++++-------------
+ src/libbluray/bluray.h |   2 +-
+ 4 files changed, 183 insertions(+), 76 deletions(-)
+
 diff --git a/Makefile.am b/Makefile.am
-index 33813b07..d7b909c4 100644
+index 04365fd9..a4c55bf8 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -210,6 +210,15 @@ noinst_HEADERS = \
- 	jni/win32/jni_md.h \
- 	jni/darwin/jni_md.h
- 
-+
-+bdnavdir=$(pkgincludedir)/bdnav
-+bdnav_HEADERS = \
-+	src/libbluray/bdnav/clpi_data.h
-+
-+utildir=$(pkgincludedir)/../util
-+util_HEADERS = \
-+	src/util/attributes.h
-+
- pkginclude_HEADERS = \
- 	src/file/filesystem.h \
- 	src/libbluray/bluray.h \
-@@ -217,6 +226,10 @@ pkginclude_HEADERS = \
- 	src/libbluray/keys.h \
- 	src/libbluray/player_settings.h \
- 	src/libbluray/bdnav/clpi_data.h \
-+	src/libbluray/bdnav/clpi_parse.h \
-+	src/libbluray/bdnav/mpls_parse.h \
-+	src/libbluray/bdnav/mpls_data.h \
-+	src/libbluray/bdnav/uo_mask_table.h \
- 	src/libbluray/bdnav/meta_data.h \
- 	src/libbluray/decoders/overlay.h \
+@@ -224,6 +224,7 @@ pkginclude_HEADERS = \
  	src/util/log_control.h
-diff --git a/config.h b/config.h
-new file mode 100644
-index 00000000..bd39268a
---- /dev/null
-+++ b/config.h
-@@ -0,0 +1,157 @@
-+/* config.h.  Generated from config.h.in by configure.  */
-+/* config.h.in.  Generated from configure.ac by autoheader.  */
+ 
+ 
++if USING_BDJAVA
+ if USING_BDJAVA_BUILD_JAR
+ jardir=$(datadir)/java/
+ jar_DATA=$(top_builddir)/.libs/libbluray-$(BDJ_TYPE)-$(VERSION).jar
+@@ -245,6 +246,7 @@ clean-local:
+ 	    -Dversion='$(BDJ_TYPE)-$(VERSION)' \
+ 	    clean
+ endif
++endif
+ 
+ pkgconfigdir = $(libdir)/pkgconfig
+ pkgconfig_DATA = src/libbluray.pc
+@@ -257,7 +259,6 @@ pkgconfig_DATA = src/libbluray.pc
+ if USING_EXAMPLES
+ 
+ noinst_PROGRAMS = \
+-	bdj_test \
+ 	bdjo_dump \
+ 	bdsplice \
+ 	clpi_dump \
+@@ -269,6 +270,11 @@ noinst_PROGRAMS = \
+ 	mpls_dump \
+ 	sound_dump
+ 
++if USING_BDJAVA
++noinst_PROGRAMS += \
++	bdj_test
++endif
 +
-+/* Define to 1 if libudfread is to be used for disc image access */
-+/* #undef ENABLE_UDF */
+ bin_PROGRAMS = \
+ 	bd_info
+ 
+diff --git a/configure.ac b/configure.ac
+index 5fd3c8de..0774bfd2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -81,6 +81,11 @@ AC_ARG_ENABLE([examples],
+   [use_examples=$enableval],
+   [use_examples=yes])
+ 
++AC_ARG_ENABLE([bdjava],
++  [AS_HELP_STRING([--disable-bdjava], [disable BD-Java support @<:@default=enabled@:>@])],
++  [use_bdjava=$enableval],
++  [use_bdjava=yes])
 +
-+/* Define to 1 if using libbluray J2ME stack */
-+/* #undef HAVE_BDJ_J2ME */
+ AC_ARG_ENABLE([bdjava-jar],
+   [AS_HELP_STRING([--disable-bdjava-jar],
+   [disable building of BD-Java JAR file @<:@default=enabled@:>@])],
+@@ -196,23 +201,24 @@ dnl use examples
+ AM_CONDITIONAL([USING_EXAMPLES], [ test $use_examples = "yes" ])
+ 
+ dnl use bdjava
+-case $host_cpu in
+-     x86_64) java_arch=amd64 ;;
+-     i?86)   java_arch=i386 ;;
+-     arm*)   java_arch=arm ;;
+-     *)      java_arch=$host_cpu ;;
+-esac
+-case $host_os in
+-     linux*)   java_os=linux ;;
+-     win*)     java_os=win32 ;;
+-     mingw*)   java_os=win32 ;;
+-     freebsd*) java_os=freebsd ;;
+-     solaris*) java_os=solaris ;;
+-     darwin*)  java_os=darwin ;;
+-     *)        java_os=$host_os ;;
+-esac
+-
+-AS_IF([test "x${JDK_HOME}" != "x"], [
++if [[ $use_bdjava = "yes" ]]; then
++  case $host_cpu in
++       x86_64) java_arch=amd64 ;;
++       i?86)   java_arch=i386 ;;
++       arm*)   java_arch=arm ;;
++       *)      java_arch=$host_cpu ;;
++  esac
++  case $host_os in
++       linux*)   java_os=linux ;;
++       win*)     java_os=win32 ;;
++       mingw*)   java_os=win32 ;;
++       freebsd*) java_os=freebsd ;;
++       solaris*) java_os=solaris ;;
++       darwin*)  java_os=darwin ;;
++       *)        java_os=$host_os ;;
++  esac
 +
-+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
-+   */
-+/* #undef HAVE_DIRENT_H */
-+
-+/* Define to 1 if you have the <dlfcn.h> header file. */
-+/* #undef HAVE_DLFCN_H */
-+
-+/* Define to 1 if you have the <errno.h> header file. */
-+#define HAVE_ERRNO_H 1
-+
-+/* Define to 1 if you have the <fcntl.h> header file. */
-+/* #undef HAVE_FCNTL_H */
-+
-+/* Define this if you have fontconfig library */
-+/* #undef HAVE_FONTCONFIG */
-+
-+/* Define this if you have FreeType2 library */
-+/* #undef HAVE_FT2 */
-+
-+/* Define to 1 if you have the <inttypes.h> header file. */
-+#define HAVE_INTTYPES_H 1
-+
-+/* Define to 1 if you have the <jni.h> header file. */
-+/* #undef HAVE_JNI_H */
-+
-+/* Define to 1 if you have the <libgen.h> header file. */
-+#define HAVE_LIBGEN_H 1
-+
-+/* Define to 1 if libxml2 is to be used for metadata parsing */
-+/* #undef HAVE_LIBXML2 */
-+
-+/* Define to 1 if you have the <linux/cdrom.h> header file. */
-+/* #undef HAVE_LINUX_CDROM_H */
-+
-+/* Define to 1 if you have the <malloc.h> header file. */
-+#define HAVE_MALLOC_H 1
-+
-+/* Define to 1 if you have the <memory.h> header file. */
-+#define HAVE_MEMORY_H 1
-+
-+/* Define to 1 if you have the <mntent.h> header file. */
-+/* #undef HAVE_MNTENT_H */
-+
-+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
-+/* #undef HAVE_NDIR_H */
-+
-+/* Define to 1 if you have the <pthread.h> header file. */
-+/* #undef HAVE_PTHREAD_H */
-+
-+/* Define to 1 if you have the <stdarg.h> header file. */
-+#define HAVE_STDARG_H 1
-+
-+/* Define to 1 if you have the <stdint.h> header file. */
-+#define HAVE_STDINT_H 1
-+
-+/* Define to 1 if you have the <stdlib.h> header file. */
-+#define HAVE_STDLIB_H 1
-+
-+/* Define to 1 if you have the <strings.h> header file. */
-+/* #undef HAVE_STRINGS_H */
-+
-+/* Define to 1 if you have the <string.h> header file. */
-+#define HAVE_STRING_H 1
-+
-+/* Define to 1 if `d_type' is a member of `struct dirent'. */
-+/* #undef HAVE_STRUCT_DIRENT_D_TYPE */
-+
-+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
-+   */
-+/* #undef HAVE_SYS_DIR_H */
-+
-+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
-+   */
-+/* #undef HAVE_SYS_NDIR_H */
-+
-+/* Define to 1 if you have the <sys/stat.h> header file. */
-+#define HAVE_SYS_STAT_H 1
-+
-+/* Define to 1 if you have the <sys/time.h> header file. */
-+#define HAVE_SYS_TIME_H 1
-+
-+/* Define to 1 if you have the <sys/types.h> header file. */
-+#define HAVE_SYS_TYPES_H 1
-+
-+/* Define to 1 if you have the <time.h> header file. */
-+#define HAVE_TIME_H 1
-+
-+/* Define to 1 if you have the <unistd.h> header file. */
-+/* #undef HAVE_UNISTD_H */
-+
-+/* "Defines the architecture of the java vm." */
-+/* #undef JAVA_ARCH */
-+
-+/* "" */
-+/* #undef JDK_HOME */
-+
-+/* Define to the sub-directory where libtool stores uninstalled libraries. */
-+#define LT_OBJDIR ".libs/"
-+
-+/* Name of package */
-+#define PACKAGE "libbluray"
-+
-+/* Define to the address where bug reports for this package should be sent. */
-+#define PACKAGE_BUGREPORT "http://www.videolan.org/developers/libbluray.html"
-+
-+/* Define to the full name of this package. */
-+#define PACKAGE_NAME "libbluray"
-+
-+/* Define to the full name and version of this package. */
-+#define PACKAGE_STRING "libbluray 1.0.0"
-+
-+/* Define to the one symbol short name of this package. */
-+#define PACKAGE_TARNAME "libbluray"
-+
-+/* Define to the home page for this package. */
-+#define PACKAGE_URL ""
-+
-+/* Define to the version of this package. */
-+#define PACKAGE_VERSION "1.0.0"
-+
-+/* Define as the return type of signal handlers (`int' or `void'). */
-+#define RETSIGTYPE void
-+
-+/* Define to 1 if you have the ANSI C header files. */
-+#define STDC_HEADERS 1
-+
-+/* "Define to 1 if using BD-Java" */
-+/* #undef USING_BDJAVA */
-+
-+/* Version number of package */
-+#define VERSION "1.0.0"
-+
-+/* Enable large inode numbers on Mac OS X 10.5.  */
-+#ifndef _DARWIN_USE_64_BIT_INODE
-+# define _DARWIN_USE_64_BIT_INODE 1
++  AS_IF([test "x${JDK_HOME}" != "x"], [
+     BDJAVA_CFLAGS="-I${JDK_HOME}/include -I${JDK_HOME}/include/$java_os"
+ 
+     temp_CPPFLAGS="$CPPFLAGS"
+@@ -223,13 +229,16 @@ AS_IF([test "x${JDK_HOME}" != "x"], [
+     BDJAVA_CFLAGS='-I${abs_top_srcdir}/jni -I${abs_top_srcdir}/jni/'"${java_os}"
+ ])
+ 
+-AC_CHECK_PROG(HAVE_ANT, [ant], yes, no)
+-if test "x$use_bdjava_jar" = "xyes" && test "x$HAVE_ANT" = "xno"; then
+-    AC_MSG_ERROR([BD-J requires ANT, but ant was not found. Please install it.])
+-fi
++  AC_CHECK_PROG(HAVE_ANT, [ant], yes, no)
++  if test "x$use_bdjava_jar" = "xyes" && test "x$HAVE_ANT" = "xno"; then
++      AC_MSG_ERROR([BD-J requires ANT, but ant was not found. Please install it.])
++  fi
+ 
+-AC_DEFINE_UNQUOTED([JAVA_ARCH], ["$java_arch"], ["Defines the architecture of the java vm."])
+-AC_DEFINE_UNQUOTED([JDK_HOME], ["$JDK_HOME"], [""])
++  AC_DEFINE([USING_BDJAVA], [1], ["Define to 1 if using BD-Java"])
++  AC_DEFINE_UNQUOTED([JAVA_ARCH], ["$java_arch"], ["Defines the architecture of the java vm."])
++  AC_DEFINE_UNQUOTED([JDK_HOME], ["$JDK_HOME"], [""])
++fi
++AM_CONDITIONAL([USING_BDJAVA], [ test $use_bdjava = "yes" ])
+ AM_CONDITIONAL([USING_BDJAVA_BUILD_JAR], [ test $use_bdjava_jar = "yes" ])
+ 
+ dnl BD-J type
+@@ -279,19 +288,24 @@ dnl ---------------------------------------------
+ 
+ echo "  Summary:"
+ echo "  --------"
++echo "  BD-J support:                  $use_bdjava"
++if [[ $use_bdjava = "yes" ]]; then
+ echo "  BD-J type:                     $BDJ_TYPE"
+ echo "  build JAR:                     $use_bdjava_jar"
+ if test x"$BDJ_BOOTCLASSPATH" != x""; then
+ echo "  BD-J bootclasspath:            $BDJ_BOOTCLASSPATH"
+ fi
++fi
+ echo "  Font support (freetype2):      $with_freetype"
+ if [[ $with_freetype = "yes" ]]; then
++if [[ $use_bdjava = "yes" ]]; then
+ if test "${SYS}" != "mingw32"; then
+ echo "  Use system fonts (fontconfig): $with_fontconfig"
+ else
+ echo "  Use system fonts:              yes"
+ fi
+ fi
++fi
+ echo "  Metadata support (libxml2):    $with_libxml2"
+ echo "  Build examples:                $use_examples"
+ 
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index 883b35ce..8adbd71d 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -51,8 +51,10 @@
+ #include "disc/disc.h"
+ #include "disc/enc_info.h"
+ #include "file/file.h"
++#ifdef USING_BDJAVA
+ #include "bdj/bdj.h"
+ #include "bdj/bdjo_parse.h"
 +#endif
-+
-+/* Number of bits in a file offset, on hosts where this is settable. */
-+#define _FILE_OFFSET_BITS 64
-+
-+/* Define for large files, on AIX-style hosts. */
-+/* #undef _LARGE_FILES */
-+
-+/* Define to '0x0501' for IE 5.01. */
-+#define _WIN32_IE 0x0501
-+
-+/* Define to '0x0502' for Windows XP SP2 APIs. */
-+#define _WIN32_WINNT 0x0502
-diff --git a/includes/inttypes.h b/includes/inttypes.h
-new file mode 100644
-index 00000000..ead903f7
---- /dev/null
-+++ b/includes/inttypes.h
-@@ -0,0 +1,305 @@
-+// ISO C9x  compliant inttypes.h for Microsoft Visual Studio
-+// Based on ISO/IEC 9899:TC2 Committee draft (May 6, 2005) WG14/N1124
-+//
-+//  Copyright (c) 2006 Alexander Chemeris
-+//
-+// Redistribution and use in source and binary forms, with or without
-+// modification, are permitted provided that the following conditions are met:
-+//
-+//   1. Redistributions of source code must retain the above copyright notice,
-+//      this list of conditions and the following disclaimer.
-+//
-+//   2. Redistributions in binary form must reproduce the above copyright
-+//      notice, this list of conditions and the following disclaimer in the
-+//      documentation and/or other materials provided with the distribution.
-+//
-+//   3. The name of the author may be used to endorse or promote products
-+//      derived from this software without specific prior written permission.
-+//
-+// THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
-+// WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-+// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
-+// EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+//
-+///////////////////////////////////////////////////////////////////////////////
-+
-+#ifndef _MSC_VER // [
-+#error "Use this header only with Microsoft Visual C++ compilers!"
-+#endif // _MSC_VER ]
-+
-+#ifndef _MSC_INTTYPES_H_ // [
-+#define _MSC_INTTYPES_H_
-+
-+#if _MSC_VER > 1000
-+#pragma once
+ 
+ #include <stdio.h> // SEEK_
+ #include <stdlib.h>
+@@ -150,9 +152,11 @@ struct bluray {
+     uint8_t         hdmv_suspended;
+ 
+     /* BD-J */
++#ifdef USING_BDJAVA
+     BDJAVA         *bdjava;
+     BDJ_STORAGE     bdjstorage;
+     uint8_t         bdj_wait_start;  /* BD-J has selected playlist (prefetch) but not yet started playback */
 +#endif
-+
-+#include "stdint.h"
-+
-+// 7.8 Format conversion of integer types
-+
-+typedef struct {
-+   intmax_t quot;
-+   intmax_t rem;
-+} imaxdiv_t;
-+
-+// 7.8.1 Macros for format specifiers
-+
-+#if !defined(__cplusplus) || defined(__STDC_FORMAT_MACROS) // [   See footnote 185 at page 198
-+
-+// The fprintf macros for signed integers are:
-+#define PRId8       "d"
-+#define PRIi8       "i"
-+#define PRIdLEAST8  "d"
-+#define PRIiLEAST8  "i"
-+#define PRIdFAST8   "d"
-+#define PRIiFAST8   "i"
-+
-+#define PRId16       "hd"
-+#define PRIi16       "hi"
-+#define PRIdLEAST16  "hd"
-+#define PRIiLEAST16  "hi"
-+#define PRIdFAST16   "hd"
-+#define PRIiFAST16   "hi"
-+
-+#define PRId32       "I32d"
-+#define PRIi32       "I32i"
-+#define PRIdLEAST32  "I32d"
-+#define PRIiLEAST32  "I32i"
-+#define PRIdFAST32   "I32d"
-+#define PRIiFAST32   "I32i"
-+
-+#define PRId64       "I64d"
-+#define PRIi64       "I64i"
-+#define PRIdLEAST64  "I64d"
-+#define PRIiLEAST64  "I64i"
-+#define PRIdFAST64   "I64d"
-+#define PRIiFAST64   "I64i"
-+
-+#define PRIdMAX     "I64d"
-+#define PRIiMAX     "I64i"
-+
-+#define PRIdPTR     "Id"
-+#define PRIiPTR     "Ii"
-+
-+// The fprintf macros for unsigned integers are:
-+#define PRIo8       "o"
-+#define PRIu8       "u"
-+#define PRIx8       "x"
-+#define PRIX8       "X"
-+#define PRIoLEAST8  "o"
-+#define PRIuLEAST8  "u"
-+#define PRIxLEAST8  "x"
-+#define PRIXLEAST8  "X"
-+#define PRIoFAST8   "o"
-+#define PRIuFAST8   "u"
-+#define PRIxFAST8   "x"
-+#define PRIXFAST8   "X"
-+
-+#define PRIo16       "ho"
-+#define PRIu16       "hu"
-+#define PRIx16       "hx"
-+#define PRIX16       "hX"
-+#define PRIoLEAST16  "ho"
-+#define PRIuLEAST16  "hu"
-+#define PRIxLEAST16  "hx"
-+#define PRIXLEAST16  "hX"
-+#define PRIoFAST16   "ho"
-+#define PRIuFAST16   "hu"
-+#define PRIxFAST16   "hx"
-+#define PRIXFAST16   "hX"
-+
-+#define PRIo32       "I32o"
-+#define PRIu32       "I32u"
-+#define PRIx32       "I32x"
-+#define PRIX32       "I32X"
-+#define PRIoLEAST32  "I32o"
-+#define PRIuLEAST32  "I32u"
-+#define PRIxLEAST32  "I32x"
-+#define PRIXLEAST32  "I32X"
-+#define PRIoFAST32   "I32o"
-+#define PRIuFAST32   "I32u"
-+#define PRIxFAST32   "I32x"
-+#define PRIXFAST32   "I32X"
-+
-+#define PRIo64       "I64o"
-+#define PRIu64       "I64u"
-+#define PRIx64       "I64x"
-+#define PRIX64       "I64X"
-+#define PRIoLEAST64  "I64o"
-+#define PRIuLEAST64  "I64u"
-+#define PRIxLEAST64  "I64x"
-+#define PRIXLEAST64  "I64X"
-+#define PRIoFAST64   "I64o"
-+#define PRIuFAST64   "I64u"
-+#define PRIxFAST64   "I64x"
-+#define PRIXFAST64   "I64X"
-+
-+#define PRIoMAX     "I64o"
-+#define PRIuMAX     "I64u"
-+#define PRIxMAX     "I64x"
-+#define PRIXMAX     "I64X"
-+
-+#define PRIoPTR     "Io"
-+#define PRIuPTR     "Iu"
-+#define PRIxPTR     "Ix"
-+#define PRIXPTR     "IX"
-+
-+// The fscanf macros for signed integers are:
-+#define SCNd8       "d"
-+#define SCNi8       "i"
-+#define SCNdLEAST8  "d"
-+#define SCNiLEAST8  "i"
-+#define SCNdFAST8   "d"
-+#define SCNiFAST8   "i"
-+
-+#define SCNd16       "hd"
-+#define SCNi16       "hi"
-+#define SCNdLEAST16  "hd"
-+#define SCNiLEAST16  "hi"
-+#define SCNdFAST16   "hd"
-+#define SCNiFAST16   "hi"
-+
-+#define SCNd32       "ld"
-+#define SCNi32       "li"
-+#define SCNdLEAST32  "ld"
-+#define SCNiLEAST32  "li"
-+#define SCNdFAST32   "ld"
-+#define SCNiFAST32   "li"
-+
-+#define SCNd64       "I64d"
-+#define SCNi64       "I64i"
-+#define SCNdLEAST64  "I64d"
-+#define SCNiLEAST64  "I64i"
-+#define SCNdFAST64   "I64d"
-+#define SCNiFAST64   "I64i"
-+
-+#define SCNdMAX     "I64d"
-+#define SCNiMAX     "I64i"
-+
-+#ifdef _WIN64 // [
-+#  define SCNdPTR     "I64d"
-+#  define SCNiPTR     "I64i"
-+#else  // _WIN64 ][
-+#  define SCNdPTR     "ld"
-+#  define SCNiPTR     "li"
-+#endif  // _WIN64 ]
-+
-+// The fscanf macros for unsigned integers are:
-+#define SCNo8       "o"
-+#define SCNu8       "u"
-+#define SCNx8       "x"
-+#define SCNX8       "X"
-+#define SCNoLEAST8  "o"
-+#define SCNuLEAST8  "u"
-+#define SCNxLEAST8  "x"
-+#define SCNXLEAST8  "X"
-+#define SCNoFAST8   "o"
-+#define SCNuFAST8   "u"
-+#define SCNxFAST8   "x"
-+#define SCNXFAST8   "X"
-+
-+#define SCNo16       "ho"
-+#define SCNu16       "hu"
-+#define SCNx16       "hx"
-+#define SCNX16       "hX"
-+#define SCNoLEAST16  "ho"
-+#define SCNuLEAST16  "hu"
-+#define SCNxLEAST16  "hx"
-+#define SCNXLEAST16  "hX"
-+#define SCNoFAST16   "ho"
-+#define SCNuFAST16   "hu"
-+#define SCNxFAST16   "hx"
-+#define SCNXFAST16   "hX"
-+
-+#define SCNo32       "lo"
-+#define SCNu32       "lu"
-+#define SCNx32       "lx"
-+#define SCNX32       "lX"
-+#define SCNoLEAST32  "lo"
-+#define SCNuLEAST32  "lu"
-+#define SCNxLEAST32  "lx"
-+#define SCNXLEAST32  "lX"
-+#define SCNoFAST32   "lo"
-+#define SCNuFAST32   "lu"
-+#define SCNxFAST32   "lx"
-+#define SCNXFAST32   "lX"
-+
-+#define SCNo64       "I64o"
-+#define SCNu64       "I64u"
-+#define SCNx64       "I64x"
-+#define SCNX64       "I64X"
-+#define SCNoLEAST64  "I64o"
-+#define SCNuLEAST64  "I64u"
-+#define SCNxLEAST64  "I64x"
-+#define SCNXLEAST64  "I64X"
-+#define SCNoFAST64   "I64o"
-+#define SCNuFAST64   "I64u"
-+#define SCNxFAST64   "I64x"
-+#define SCNXFAST64   "I64X"
-+
-+#define SCNoMAX     "I64o"
-+#define SCNuMAX     "I64u"
-+#define SCNxMAX     "I64x"
-+#define SCNXMAX     "I64X"
-+
-+#ifdef _WIN64 // [
-+#  define SCNoPTR     "I64o"
-+#  define SCNuPTR     "I64u"
-+#  define SCNxPTR     "I64x"
-+#  define SCNXPTR     "I64X"
-+#else  // _WIN64 ][
-+#  define SCNoPTR     "lo"
-+#  define SCNuPTR     "lu"
-+#  define SCNxPTR     "lx"
-+#  define SCNXPTR     "lX"
-+#endif  // _WIN64 ]
-+
-+#endif // __STDC_FORMAT_MACROS ]
-+
-+// 7.8.2 Functions for greatest-width integer types
-+
-+// 7.8.2.1 The imaxabs function
-+#define imaxabs _abs64
-+
-+// 7.8.2.2 The imaxdiv function
-+
-+// This is modified version of div() function from Microsoft's div.c found
-+// in %MSVC.NET%\crt\src\div.c
-+#ifdef STATIC_IMAXDIV // [
-+static
-+#else // STATIC_IMAXDIV ][
-+_inline
-+#endif // STATIC_IMAXDIV ]
-+imaxdiv_t __cdecl imaxdiv(intmax_t numer, intmax_t denom)
+ 
+     /* HDMV graphics */
+     GRAPHICS_CONTROLLER *graphics_controller;
+@@ -166,10 +170,12 @@ struct bluray {
+     uint64_t gc_wakeup_pos;   /* stream position of gc_wakeup_time */
+ 
+     /* ARGB overlay output */
++#ifdef USING_BDJAVA
+     void                *argb_overlay_proc_handle;
+     bd_argb_overlay_proc_f argb_overlay_proc;
+     BD_ARGB_BUFFER      *argb_buffer;
+     BD_MUTEX             argb_buffer_mutex;
++#endif
+ };
+ 
+ /* Stream Packet Number = byte offset / 192. Avoid 64-bit division. */
+@@ -532,6 +538,16 @@ static void _update_uo_mask(BLURAY *bd)
+     bd->uo_mask = new_mask;
+ }
+ 
++#ifdef USING_BDJAVA
++void bd_set_bdj_uo_mask(BLURAY *bd, unsigned mask)
 +{
-+   imaxdiv_t result;
++    bd->title_uo_mask.title_search = !!(mask & BDJ_TITLE_SEARCH_MASK);
++    bd->title_uo_mask.menu_call    = !!(mask & BDJ_MENU_CALL_MASK);
 +
-+   result.quot = numer / denom;
-+   result.rem = numer % denom;
++    _update_uo_mask(bd);
++}
++#endif
 +
-+   if (numer < 0 && result.rem > 0) {
-+      // did division wrong; must fix up
-+      ++result.quot;
-+      result.rem -= denom;
-+   }
+ static void _update_hdmv_uo_mask(BLURAY *bd)
+ {
+     uint32_t mask = hdmv_vm_get_uo_mask(bd->hdmv_vm);
+@@ -899,6 +915,7 @@ static int _run_gc(BLURAY *bd, gc_ctrl_e msg, uint32_t param)
+ 
+ static void _check_bdj(BLURAY *bd)
+ {
++#ifdef USING_BDJAVA
+     if (!bd->disc_info.bdj_handled) {
+         if (!bd->disc || bd->disc_info.bdj_detected) {
+ 
+@@ -911,6 +928,7 @@ static void _check_bdj(BLURAY *bd)
+             }
+         }
+     }
++#endif /* USING_BDJAVA */
+ }
+ 
+ static void _fill_disc_info(BLURAY *bd, BD_ENC_INFO *enc_info)
+@@ -940,7 +958,7 @@ static void _fill_disc_info(BLURAY *bd, BD_ENC_INFO *enc_info)
+     bd->disc_info.num_unsupported_titles = 0;
+ 
+     bd->disc_info.bdj_detected    = 0;
+-    bd->disc_info.bdj_supported   = 1;
++    bd->disc_info.bdj_supported   = 0;
+ 
+     bd->disc_info.num_titles  = 0;
+     bd->disc_info.titles      = NULL;
+@@ -1104,22 +1122,17 @@ const BLURAY_DISC_INFO *bd_get_disc_info(BLURAY *bd)
+ }
+ 
+ /*
+- * bdj callbacks
++ * bdj
+  */
+ 
+-void bd_set_bdj_uo_mask(BLURAY *bd, unsigned mask)
+-{
+-    bd->title_uo_mask.title_search = !!(mask & BDJ_TITLE_SEARCH_MASK);
+-    bd->title_uo_mask.menu_call    = !!(mask & BDJ_MENU_CALL_MASK);
+-
+-    _update_uo_mask(bd);
+-}
+-
++#ifdef USING_BDJAVA
+ const uint8_t *bd_get_aacs_data(BLURAY *bd, int type)
+ {
+     return disc_get_data(bd->disc, type);
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ uint64_t bd_get_uo_mask(BLURAY *bd)
+ {
+     /* internal function. Used by BD-J. */
+@@ -1134,25 +1147,16 @@ uint64_t bd_get_uo_mask(BLURAY *bd)
+ 
+     return mask.u64;
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ void bd_set_bdj_kit(BLURAY *bd, int mask)
+ {
+     _queue_event(bd, BD_EVENT_KEY_INTEREST_TABLE, mask);
+ }
++#endif
+ 
+-int bd_bdj_sound_effect(BLURAY *bd, int id)
+-{
+-    if (bd->sound_effects && id >= bd->sound_effects->num_sounds) {
+-        return -1;
+-    }
+-    if (id < 0 || id > 0xff) {
+-        return -1;
+-    }
+-
+-    _queue_event(bd, BD_EVENT_SOUND_EFFECT, id);
+-    return 0;
+-}
+-
++#ifdef USING_BDJAVA
+ void bd_select_rate(BLURAY *bd, float rate, int reason)
+ {
+     if (reason == BDJ_PLAYBACK_STOP) {
+@@ -1171,26 +1175,9 @@ void bd_select_rate(BLURAY *bd, float rate, int reason)
+         _queue_event(bd, BD_EVENT_STILL, 0);
+     }
+ }
++#endif
+ 
+-int bd_bdj_seek(BLURAY *bd, int playitem, int playmark, int64_t time)
+-{
+-    bd_mutex_lock(&bd->mutex);
+-
+-    if (playitem > 0) {
+-        bd_seek_playitem(bd, playitem);
+-    }
+-    if (playmark >= 0) {
+-        bd_seek_mark(bd, playmark);
+-    }
+-    if (time >= 0) {
+-        bd_seek_time(bd, time);
+-    }
+-
+-    bd_mutex_unlock(&bd->mutex);
+-
+-    return 1;
+-}
+-
++#ifdef USING_BDJAVA
+ int bd_set_virtual_package(BLURAY *bd, const char *vp_path, int psr_init_backup)
+ {
+     bd_mutex_lock(&bd->mutex);
+@@ -1216,12 +1203,16 @@ int bd_set_virtual_package(BLURAY *bd, const char *vp_path, int psr_init_backup)
+ 
+     return 0;
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ BD_DISC *bd_get_disc(BLURAY *bd)
+ {
+     return bd ? bd->disc : NULL;
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ uint32_t bd_reg_read(BLURAY *bd, int psr, int reg)
+ {
+     if (psr) {
+@@ -1230,7 +1221,9 @@ uint32_t bd_reg_read(BLURAY *bd, int psr, int reg)
+         return bd_gpr_read(bd->regs, reg);
+     }
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ int bd_reg_write(BLURAY *bd, int psr, int reg, uint32_t value, uint32_t psr_value_mask)
+ {
+     if (psr) {
+@@ -1247,7 +1240,9 @@ int bd_reg_write(BLURAY *bd, int psr, int reg, uint32_t value, uint32_t psr_valu
+         return bd_gpr_write(bd->regs, reg, value);
+     }
+ }
++#endif
+ 
++#ifdef USING_BDJAVA
+ BD_ARGB_BUFFER *bd_lock_osd_buffer(BLURAY *bd)
+ {
+     bd_mutex_lock(&bd->argb_buffer_mutex);
+@@ -1333,13 +1328,11 @@ void bd_bdj_osd_cb(BLURAY *bd, const unsigned *img, int w, int h,
+         bd->argb_buffer->dirty[BD_OVERLAY_IG].y1 = 0;
+     }
+ }
+-
+-/*
+- * BD-J
+- */
++#endif
+ 
+ static int _start_bdj(BLURAY *bd, unsigned title)
+ {
++#ifdef USING_BDJAVA
+     if (bd->bdjava == NULL) {
+         const char *root = disc_root(bd->disc);
+         bd->bdjava = bdj_open(root, bd, bd->disc_info.bdj_disc_id, &bd->bdjstorage);
+@@ -1349,8 +1342,14 @@ static int _start_bdj(BLURAY *bd, unsigned title)
+     }
+ 
+     return !bdj_process_event(bd->bdjava, BDJ_EVENT_START, title);
++#else
++    (void)bd;
++    BD_DEBUG(DBG_BLURAY | DBG_CRIT, "Title %d: BD-J not compiled in\n", title);
++    return 0;
++#endif
+ }
+ 
++#ifdef USING_BDJAVA
+ static int _bdj_event(BLURAY *bd, unsigned ev, unsigned param)
+ {
+     if (bd->bdjava != NULL) {
+@@ -1358,7 +1357,11 @@ static int _bdj_event(BLURAY *bd, unsigned ev, unsigned param)
+     }
+     return -1;
+ }
++#else
++#define _bdj_event(bd, ev, param) do{}while(0)
++#endif
+ 
++#ifdef USING_BDJAVA
+ static void _stop_bdj(BLURAY *bd)
+ {
+     if (bd->bdjava != NULL) {
+@@ -1367,7 +1370,11 @@ static void _stop_bdj(BLURAY *bd)
+         _queue_event(bd, BD_EVENT_KEY_INTEREST_TABLE, 0);
+     }
+ }
++#else
++#define _stop_bdj(bd) do{}while(0)
++#endif
+ 
++#ifdef USING_BDJAVA
+ static void _close_bdj(BLURAY *bd)
+ {
+     if (bd->bdjava != NULL) {
+@@ -1375,11 +1382,24 @@ static void _close_bdj(BLURAY *bd)
+         bd->bdjava = NULL;
+     }
+ }
++#else
++#define _close_bdj(bd) do{}while(0)
++#endif
 +
-+   return result;
++#ifdef USING_BDJAVA
++static void _storage_free(BLURAY *bd)
++{
++    X_FREE(bd->bdjstorage.cache_root);
++    X_FREE(bd->bdjstorage.persistent_root);
++    X_FREE(bd->bdjstorage.classpath);
++}
++#else
++#define _storage_free(bd) do{}while(0)
++#endif
+ 
+ /*
+  * open / close
+  */
+-
+ BLURAY *bd_init(void)
+ {
+     char *env;
+@@ -1401,6 +1421,7 @@ BLURAY *bd_init(void)
+     }
+ 
+     bd_mutex_init(&bd->mutex);
++#ifdef USING_BDJAVA
+     bd_mutex_init(&bd->argb_buffer_mutex);
+ 
+     env = getenv("LIBBLURAY_PERSISTENT_STORAGE");
+@@ -1408,6 +1429,7 @@ BLURAY *bd_init(void)
+         int v = (!strcmp(env, "yes")) ? 1 : (!strcmp(env, "no")) ? 0 : atoi(env);
+         bd->bdjstorage.no_persistent_storage = !v;
+     }
++#endif
+ 
+     BD_DEBUG(DBG_BLURAY, "BLURAY initialized!\n");
+ 
+@@ -1522,7 +1544,9 @@ void bd_close(BLURAY *bd)
+     disc_close(&bd->disc);
+ 
+     bd_mutex_destroy(&bd->mutex);
++#ifdef USING_BDJAVA
+     bd_mutex_destroy(&bd->argb_buffer_mutex);
++#endif
+ 
+     BD_DEBUG(DBG_BLURAY, "BLURAY destroyed!\n");
+ 
+@@ -2394,7 +2418,26 @@ int bd_select_playlist(BLURAY *bd, uint32_t playlist)
+     return result;
+ }
+ 
+-/* BD-J callback */
++#ifdef USING_BDJAVA
++int bd_bdj_seek(BLURAY *bd, int playitem, int playmark, int64_t time)
++{
++    bd_mutex_lock(&bd->mutex);
++
++    if (playitem > 0) {
++        bd_seek_playitem(bd, playitem);
++    }
++    if (playmark >= 0) {
++        bd_seek_mark(bd, playmark);
++    }
++    if (time >= 0) {
++        bd_seek_time(bd, time);
++    }
++
++    bd_mutex_unlock(&bd->mutex);
++
++    return 1;
 +}
 +
-+// 7.8.2.3 The strtoimax and strtoumax functions
-+#define strtoimax _strtoi64
-+#define strtoumax _strtoui64
+ static int _play_playlist_at(BLURAY *bd, int playlist, int playitem, int playmark, int64_t time)
+ {
+     if (playlist < 0) {
+@@ -2406,14 +2449,15 @@ static int _play_playlist_at(BLURAY *bd, int playlist, int playitem, int playmar
+         return 0;
+     }
+ 
++#ifdef USING_BDJAVA
+     bd->bdj_wait_start = 1;  /* playback is triggered by bd_select_rate() */
++#endif
+ 
+     bd_bdj_seek(bd, playitem, playmark, time);
+ 
+     return 1;
+ }
+ 
+-/* BD-J callback */
+ int bd_play_playlist_at(BLURAY *bd, int playlist, int playitem, int playmark, int64_t time)
+ {
+     int result;
+@@ -2426,6 +2470,21 @@ int bd_play_playlist_at(BLURAY *bd, int playlist, int playitem, int playmark, in
+     return result;
+ }
+ 
++int bd_bdj_sound_effect(BLURAY *bd, int id)
++{
++    if (bd->sound_effects && id >= bd->sound_effects->num_sounds) {
++        return -1;
++    }
++    if (id < 0 || id > 0xff) {
++        return -1;
++    }
 +
-+// 7.8.2.4 The wcstoimax and wcstoumax functions
-+#define wcstoimax _wcstoi64
-+#define wcstoumax _wcstoui64
++    _queue_event(bd, BD_EVENT_SOUND_EFFECT, id);
++    return 0;
++}
 +
++#endif /* USING_BDJAVA */
 +
-+#endif // _MSC_INTTYPES_H_ ]
-diff --git a/libbluray.def b/libbluray.def
-new file mode 100644
-index 00000000..d4c93cb9
---- /dev/null
-+++ b/libbluray.def
-@@ -0,0 +1,63 @@
-+; libbluray.def ; declares the exports
+ // Select a title for playback
+ // The title index is an index into the list
+ // established by bd_get_titles()
+@@ -2802,7 +2861,7 @@ int bd_set_player_setting(BLURAY *bd, uint32_t idx, uint32_t value)
+         bd_mutex_unlock(&bd->mutex);
+         return result;
+     }
+-
++#ifdef USING_BDJAVA
+     if (idx == BLURAY_PLAYER_SETTING_PERSISTENT_STORAGE) {
+         if (bd->title_type != title_undef) {
+             BD_DEBUG(DBG_BLURAY | DBG_CRIT, "Can't disable persistent storage during playback\n");
+@@ -2811,6 +2870,7 @@ int bd_set_player_setting(BLURAY *bd, uint32_t idx, uint32_t value)
+         bd->bdjstorage.no_persistent_storage = !value;
+         return 1;
+     }
++#endif
+ 
+     for (i = 0; i < sizeof(map) / sizeof(map[0]); i++) {
+         if (idx == map[i].idx) {
+@@ -2835,6 +2895,7 @@ int bd_set_player_setting_str(BLURAY *bd, uint32_t idx, const char *s)
+         case BLURAY_PLAYER_SETTING_COUNTRY_CODE:
+             return bd_set_player_setting(bd, idx, str_to_uint32(s, 2));
+ 
++#ifdef USING_BDJAVA
+         case BLURAY_PLAYER_CACHE_ROOT:
+             bd_mutex_lock(&bd->mutex);
+             X_FREE(bd->bdjstorage.cache_root);
+@@ -2850,6 +2911,7 @@ int bd_set_player_setting_str(BLURAY *bd, uint32_t idx, const char *s)
+             bd_mutex_unlock(&bd->mutex);
+             BD_DEBUG(DBG_BDJ, "Persistent root dir set to %s\n", bd->bdjstorage.persistent_root);
+             return 1;
++#endif /* USING_BDJAVA */
+ 
+         default:
+             return 0;
+@@ -3265,7 +3327,7 @@ static int _play_title(BLURAY *bd, unsigned title)
+     return 0;
+ }
+ 
+-/* BD-J callback */
++#ifdef USING_BDJAVA
+ int bd_play_title_internal(BLURAY *bd, unsigned title)
+ {
+     /* used by BD-J. Like bd_play_title() but bypasses UO mask checks. */
+@@ -3275,6 +3337,7 @@ int bd_play_title_internal(BLURAY *bd, unsigned title)
+     bd_mutex_unlock(&bd->mutex);
+     return ret;
+ }
++#endif
+ 
+ int bd_play(BLURAY *bd)
+ {
+@@ -3505,6 +3568,7 @@ static int _read_ext(BLURAY *bd, unsigned char *buf, int len, BD_EVENT *event)
+         return 0;
+     }
+ 
++#ifdef USING_BDJAVA
+     if (bd->title_type == title_bdj) {
+         if (bd->end_of_playlist == 1) {
+             _bdj_event(bd, BDJ_EVENT_END_OF_PLAYLIST, bd_psr_read(bd->regs, PSR_PLAYLIST));
+@@ -3523,6 +3587,7 @@ static int _read_ext(BLURAY *bd, unsigned char *buf, int len, BD_EVENT *event)
+             return 0;
+         }
+     }
++#endif
+ 
+     int bytes = _bd_read(bd, buf, len);
+ 
+@@ -3584,9 +3649,11 @@ static int _set_rate(BLURAY *bd, uint32_t rate)
+         return -1;
+     }
+ 
++#ifdef USING_BDJAVA
+     if (bd->title_type == title_bdj) {
+         return _bdj_event(bd, BDJ_EVENT_RATE, rate);
+     }
++#endif
+ 
+     return 0;
+ }
+@@ -3613,8 +3680,10 @@ int bd_mouse_select(BLURAY *bd, int64_t pts, uint16_t x, uint16_t y)
+ 
+     if (bd->title_type == title_hdmv) {
+         result = _run_gc(bd, GC_CTRL_MOUSE_MOVE, param);
++#ifdef USING_BDJAVA
+     } else if (bd->title_type == title_bdj) {
+         result = _bdj_event(bd, BDJ_EVENT_MOUSE, param);
++#endif
+     }
+ 
+     bd_mutex_unlock(&bd->mutex);
+@@ -3636,8 +3705,10 @@ int bd_user_input(BLURAY *bd, int64_t pts, uint32_t key)
+ 
+     if (bd->title_type == title_hdmv) {
+         result = _run_gc(bd, GC_CTRL_VK_KEY, key);
++#ifdef USING_BDJAVA
+     } else if (bd->title_type == title_bdj) {
+         result = _bdj_event(bd, BDJ_EVENT_VK_KEY, key);
++#endif
+     }
+ 
+     bd_mutex_unlock(&bd->mutex);
+@@ -3664,6 +3735,7 @@ void bd_register_overlay_proc(BLURAY *bd, void *handle, bd_overlay_proc_f func)
+ 
+ void bd_register_argb_overlay_proc(BLURAY *bd, void *handle, bd_argb_overlay_proc_f func, BD_ARGB_BUFFER *buf)
+ {
++#ifdef USING_BDJAVA
+     if (!bd) {
+         return;
+     }
+@@ -3675,6 +3747,12 @@ void bd_register_argb_overlay_proc(BLURAY *bd, void *handle, bd_argb_overlay_pro
+     bd->argb_buffer              = buf;
+ 
+     bd_mutex_unlock(&bd->argb_buffer_mutex);
++#else
++    (void)bd;
++    (void)handle;
++    (void)func;
++    (void)buf;
++#endif
+ }
+ 
+ int bd_get_sound_effect(BLURAY *bd, unsigned sound_id, BLURAY_SOUND_EFFECT *effect)
+@@ -3825,10 +3903,19 @@ void bd_free_mobj(struct mobj_objects *obj)
+ 
+ struct bdjo_data *bd_read_bdjo(const char *bdjo_file)
+ {
++#ifdef USING_BDJAVA
+     return bdjo_parse(bdjo_file);
++#else
++    (void)bdjo_file;
++    return NULL;
++#endif
+ }
+ 
+ void bd_free_bdjo(struct bdjo_data *obj)
+ {
++#ifdef USING_BDJAVA
+     bdjo_free(&obj);
++#else
++    (void)obj;
++#endif
+ }
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 70e6a843..60c36a40 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -90,7 +90,7 @@ typedef struct {
+ 
+     /* BD-J info  (valid only if disc uses BD-J) */
+     uint8_t  bdj_detected;     /* 1 if disc uses BD-J */
+-    uint8_t  bdj_supported;    /* (deprecated) */
++    uint8_t  bdj_supported;    /* 1 if BD-J support was compiled in */
+     uint8_t  libjvm_detected;  /* 1 if usable Java VM was found */
+     uint8_t  bdj_handled;      /* 1 if usable Java VM + libbluray.jar was found */
+ 
+
+From b50d4857aaf11c5df262e8e66fd343498c02e288 Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Mon, 4 Sep 2017 17:19:48 +0200
+Subject: [PATCH 02/14] Revert "Remove --disable-udf configure option"
+
+This reverts commit dec9a6bcf17e8ca34b3b2e3eab632a6e03832e8c.
+---
+ Makefile.am               | 10 ++++++++--
+ configure.ac              | 29 ++++++++++++++++++++++-------
+ src/libbluray/disc/disc.c |  4 ++++
+ 3 files changed, 34 insertions(+), 9 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index a4c55bf8..ff15527b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,10 +1,15 @@
+ include $(top_srcdir)/doxygen-include.am
+ 
+ ACLOCAL_AMFLAGS = -I m4
++DISTCHECK_CONFIGURE_FLAGS = --enable-bdjava --enable-udf
+ 
+ MOSTLYCLEANFILES = $(DX_CLEANFILES)
+ 
++if ENABLE_UDF
+ POSIX_C_SOURCE=200809L
++else
++POSIX_C_SOURCE=200112L
++endif
+ 
+ EXTRA_DIST = \
+ 	bootstrap \
+@@ -35,7 +40,7 @@ libbluray_la_CPPFLAGS = \
+ 	$(AM_CPPFLAGS) \
+ 	-I$(top_builddir)/src/libbluray \
+ 	$(BDJAVA_CFLAGS) \
+-	-I${top_srcdir}/contrib/libudfread/src/ \
++	$(UDF_CFLAGS) \
+ 	$(LIBXML2_CFLAGS) \
+ 	$(FT2_CFLAGS) \
+ 	$(FONTCONFIG_CFLAGS)
+@@ -166,6 +171,7 @@ libbluray_la_SOURCES += \
+ 	src/libbluray/bdj/native/util.c
+ 
+ # libudfread
++if ENABLE_UDF
+ libbluray_la_SOURCES += \
+ 	src/libbluray/disc/udf_fs.h \
+ 	src/libbluray/disc/udf_fs.c\
+@@ -177,6 +183,7 @@ libbluray_la_SOURCES += \
+ 	contrib/libudfread/src/ecma167.c \
+ 	contrib/libudfread/src/udfread.h \
+ 	contrib/libudfread/src/udfread.c
++endif
+ 
+ if HAVE_DARWIN
+ libbluray_la_SOURCES+= \
+@@ -223,7 +230,6 @@ pkginclude_HEADERS = \
+ 	src/libbluray/decoders/overlay.h \
+ 	src/util/log_control.h
+ 
+-
+ if USING_BDJAVA
+ if USING_BDJAVA_BUILD_JAR
+ jardir=$(datadir)/java/
+diff --git a/configure.ac b/configure.ac
+index 0774bfd2..15f53ca2 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -86,6 +86,11 @@ AC_ARG_ENABLE([bdjava],
+   [use_bdjava=$enableval],
+   [use_bdjava=yes])
+ 
++AC_ARG_ENABLE([udf],
++  [AS_HELP_STRING([--disable-udf], [disable UDF support @<:@default=enabled@:>@])],
++  [enable_udf=$enableval],
++  [enable_udf=yes])
 +
-+LIBRARY         "libbluray.dll"
+ AC_ARG_ENABLE([bdjava-jar],
+   [AS_HELP_STRING([--disable-bdjava-jar],
+   [disable building of BD-Java JAR file @<:@default=enabled@:>@])],
+@@ -252,13 +257,22 @@ dnl bootclasspath
+ AC_SUBST(BDJ_BOOTCLASSPATH)
+ 
+ dnl udf support (using git submodule)
+-if test ! -f "${srcdir}/contrib/libudfread/src/udfread.h"; then
+-    AC_MSG_ERROR("libudfread source tree not found")
+-fi
+-AC_CHECK_HEADERS([unistd.h fcntl.h])
+-AS_IF([test "${SYS}" != "mingw32"], [
+-    AC_CHECK_FUNC([pread],, [AC_DEFINE([NEED_PREAD_IMPL], [1], [Define to 1 to use inefficient pread() replacement])])
+-])
++AS_IF([test "x$enable_udf" = "xyes"], [
++    if test ! -f "${srcdir}/contrib/libudfread/src/udfread.h"; then
++        AC_MSG_ERROR("libudfread source tree not found")
++    fi
++    AC_CHECK_HEADERS([unistd.h fcntl.h])
++    AS_IF([test "${SYS}" != "mingw32"], [
++      AC_CHECK_FUNC([pread],, [AC_MSG_ERROR("Function pread not found. Try with --disable-udf.")])
++    ])
 +
-+EXPORTS
-+                ; bluray.h
-+                bd_get_version
-+                bd_get_titles
-+                bd_get_title_info
-+                bd_get_playlist_info
-+                bd_free_title_info
-+                bd_open
-+                bd_close
-+                bd_seek
-+                bd_seek_time
-+                bd_find_seek_point
-+                bd_read
-+                bd_read_skip_still
-+                bd_seek_chapter
-+                bd_chapter_pos
-+                bd_get_current_chapter
-+                bd_seek_mark
-+                bd_seek_playitem
-+                bd_select_playlist
-+                bd_select_title
-+                bd_select_angle
-+                bd_seamless_angle_change
-+                bd_get_title_size
-+                bd_get_current_title
-+                bd_get_current_angle
-+                bd_tell
-+                bd_tell_time
-+                bd_get_disc_info
-+                bd_set_player_setting
-+                bd_set_player_setting_str
-+                bd_start_bdj
-+                bd_stop_bdj
-+                bd_get_event
-+                bd_play
-+                bd_read_ext
-+                bd_play_title
-+                bd_menu_call
-+                bd_register_overlay_proc
-+                bd_register_argb_overlay_proc
-+                bd_set_scr
-+                bd_user_input
-+                bd_mouse_select
-+                bd_get_sound_effect
-+                bd_get_meta
-+                bd_get_clpi
-+                bd_read_clpi
-+                bd_free_clpi
-+                bd_read_mpls
-+                bd_free_mpls
-+                bd_read_mobj
-+                bd_free_mobj
-+                bd_get_clip_infos
-+                bd_get_title_mpls
++    AC_DEFINE([ENABLE_UDF], [1], [Define to 1 if libudfread is to be used for disc image access])
++    UDF_CFLAGS='-I${srcdir}/contrib/libudfread/src/'
++    AC_SUBST(UDF_CFLAGS)
++    ],
++  [enable_udf=no])
 +
-+                ; additional functions
-+                bd_set_debug_handler
-+                bd_set_debug_mask
-+                bd_get_debug_mask
-diff --git a/libbluray.vcxproj b/libbluray.vcxproj
-new file mode 100644
-index 00000000..393cd1a0
---- /dev/null
-+++ b/libbluray.vcxproj
-@@ -0,0 +1,236 @@
-+﻿<?xml version="1.0" encoding="utf-8"?>
-+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup Label="ProjectConfigurations">
-+    <ProjectConfiguration Include="DebugRelease|Win32">
-+      <Configuration>DebugRelease</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="DebugRelease|x64">
-+      <Configuration>DebugRelease</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Debug|Win32">
-+      <Configuration>Debug</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Debug|x64">
-+      <Configuration>Debug</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|Win32">
-+      <Configuration>Release</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|x64">
-+      <Configuration>Release</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="src\file\dirs.h" />
-+    <ClInclude Include="src\file\dl.h" />
-+    <ClInclude Include="src\file\file.h" />
-+    <ClInclude Include="src\file\filesystem.h" />
-+    <ClInclude Include="src\file\mount.h" />
-+    <ClInclude Include="src\libbluray\bdnav\bdid_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\bdparse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\clpi_data.h" />
-+    <ClInclude Include="src\libbluray\bdnav\clpi_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\extdata_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\index_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\meta_data.h" />
-+    <ClInclude Include="src\libbluray\bdnav\meta_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\mpls_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\navigation.h" />
-+    <ClInclude Include="src\libbluray\bdnav\sound_parse.h" />
-+    <ClInclude Include="src\libbluray\bdnav\uo_mask_table.h" />
-+    <ClInclude Include="src\libbluray\bluray-version.h" />
-+    <ClInclude Include="src\libbluray\bluray.h" />
-+    <ClInclude Include="src\libbluray\bluray_internal.h" />
-+    <ClInclude Include="src\libbluray\decoders\graphics_controller.h" />
-+    <ClInclude Include="src\libbluray\decoders\graphics_processor.h" />
-+    <ClInclude Include="src\libbluray\decoders\ig.h" />
-+    <ClInclude Include="src\libbluray\decoders\ig_decode.h" />
-+    <ClInclude Include="src\libbluray\decoders\m2ts_demux.h" />
-+    <ClInclude Include="src\libbluray\decoders\m2ts_filter.h" />
-+    <ClInclude Include="src\libbluray\decoders\overlay.h" />
-+    <ClInclude Include="src\libbluray\decoders\pes_buffer.h" />
-+    <ClInclude Include="src\libbluray\decoders\pg.h" />
-+    <ClInclude Include="src\libbluray\decoders\pg_decode.h" />
-+    <ClInclude Include="src\libbluray\decoders\rle.h" />
-+    <ClInclude Include="src\libbluray\decoders\textst.h" />
-+    <ClInclude Include="src\libbluray\decoders\textst_decode.h" />
-+    <ClInclude Include="src\libbluray\decoders\textst_render.h" />
-+    <ClInclude Include="src\libbluray\disc\aacs.h" />
-+    <ClInclude Include="src\libbluray\disc\bdplus.h" />
-+    <ClInclude Include="src\libbluray\disc\dec.h" />
-+    <ClInclude Include="src\libbluray\disc\disc.h" />
-+    <ClInclude Include="src\libbluray\disc\enc_info.h" />
-+    <ClInclude Include="src\libbluray\hdmv\hdmv_insn.h" />
-+    <ClInclude Include="src\libbluray\hdmv\hdmv_vm.h" />
-+    <ClInclude Include="src\libbluray\hdmv\mobj_parse.h" />
-+    <ClInclude Include="src\libbluray\keys.h" />
-+    <ClInclude Include="src\libbluray\register.h" />
-+    <ClInclude Include="src\util\array.h" />
-+    <ClInclude Include="src\util\attributes.h" />
-+    <ClInclude Include="src\util\bits.h" />
-+    <ClInclude Include="src\util\event_queue.h" />
-+    <ClInclude Include="src\util\logging.h" />
-+    <ClInclude Include="src\util\log_control.h" />
-+    <ClInclude Include="src\util\macro.h" />
-+    <ClInclude Include="src\util\mutex.h" />
-+    <ClInclude Include="src\util\refcnt.h" />
-+    <ClInclude Include="src\util\strutl.h" />
-+    <ClInclude Include="src\util\time.h" />
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="src\file\dirs_win32.c" />
-+    <ClCompile Include="src\file\dir_win32.c" />
-+    <ClCompile Include="src\file\dl_win32.c" />
-+    <ClCompile Include="src\file\file.c" />
-+    <ClCompile Include="src\file\filesystem.c" />
-+    <ClCompile Include="src\file\file_win32.c" />
-+    <ClCompile Include="src\file\mount.c" />
-+    <ClCompile Include="src\libbluray\bdnav\bdid_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\clpi_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\extdata_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\index_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\meta_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\mpls_parse.c" />
-+    <ClCompile Include="src\libbluray\bdnav\navigation.c" />
-+    <ClCompile Include="src\libbluray\bdnav\sound_parse.c" />
-+    <ClCompile Include="src\libbluray\bluray.c" />
-+    <ClCompile Include="src\libbluray\decoders\graphics_controller.c" />
-+    <ClCompile Include="src\libbluray\decoders\graphics_processor.c" />
-+    <ClCompile Include="src\libbluray\decoders\ig_decode.c" />
-+    <ClCompile Include="src\libbluray\decoders\m2ts_demux.c" />
-+    <ClCompile Include="src\libbluray\decoders\m2ts_filter.c" />
-+    <ClCompile Include="src\libbluray\decoders\pes_buffer.c" />
-+    <ClCompile Include="src\libbluray\decoders\pg_decode.c" />
-+    <ClCompile Include="src\libbluray\decoders\rle.c" />
-+    <ClCompile Include="src\libbluray\decoders\textst_decode.c" />
-+    <ClCompile Include="src\libbluray\decoders\textst_render.c" />
-+    <ClCompile Include="src\libbluray\disc\aacs.c" />
-+    <ClCompile Include="src\libbluray\disc\bdplus.c" />
-+    <ClCompile Include="src\libbluray\disc\dec.c" />
-+    <ClCompile Include="src\libbluray\disc\disc.c" />
-+    <ClCompile Include="src\libbluray\hdmv\hdmv_vm.c" />
-+    <ClCompile Include="src\libbluray\hdmv\mobj_parse.c" />
-+    <ClCompile Include="src\libbluray\hdmv\mobj_print.c" />
-+    <ClCompile Include="src\libbluray\register.c" />
-+    <ClCompile Include="src\util\array.c" />
-+    <ClCompile Include="src\util\bits.c" />
-+    <ClCompile Include="src\util\event_queue.c" />
-+    <ClCompile Include="src\util\logging.c" />
-+    <ClCompile Include="src\util\mutex.c" />
-+    <ClCompile Include="src\util\refcnt.c" />
-+    <ClCompile Include="src\util\strutl.c" />
-+    <ClCompile Include="src\util\time.c" />
-+  </ItemGroup>
-+  <ItemGroup>
-+    <None Include="libbluray.def" />
-+  </ItemGroup>
-+  <PropertyGroup Label="Globals">
-+    <ProjectGuid>{E1DA1B95-71F1-4C21-A271-121176925062}</ProjectGuid>
-+    <Keyword>Win32Proj</Keyword>
-+    <RootNamespace>libbluray</RootNamespace>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-+  <PropertyGroup Label="Configuration" Condition="'$(VisualStudioVersion)' == '11.0'">
-+    <PlatformToolset>v110_xp</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Label="Configuration" Condition="'$(VisualStudioVersion)' == '12.0'">
-+    <PlatformToolset>v120_xp</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Label="Configuration" Condition="'$(VisualStudioVersion)' == '14.0'">
-+    <PlatformToolset>v140_xp</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Label="Configuration" Condition="'$(VisualStudioVersion)' == '15.0'">
-+    <PlatformToolset>v141_xp</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)'=='Debug' Or '$(Configuration)'=='DebugRelease'" Label="Configuration">
-+    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <UseDebugLibraries>true</UseDebugLibraries>
-+    <CharacterSet>Unicode</CharacterSet>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
-+    <ConfigurationType>DynamicLibrary</ConfigurationType>
-+    <UseDebugLibraries>false</UseDebugLibraries>
-+    <WholeProgramOptimization>true</WholeProgramOptimization>
-+    <CharacterSet>Unicode</CharacterSet>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-+  <ImportGroup Label="ExtensionSettings">
-+  </ImportGroup>
-+  <ImportGroup Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <PropertyGroup Label="UserMacros" />
-+  <PropertyGroup Condition="'$(Configuration)'=='Debug' Or '$(Configuration)'=='DebugRelease'">
-+    <LinkIncremental>true</LinkIncremental>
-+    <OutDir>$(SolutionDir)bin_$(PlatformName)d\</OutDir>
-+    <IntDir>$(SolutionDir)bin_$(PlatformName)d\$(ProjectName)\</IntDir>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-+    <LinkIncremental>false</LinkIncremental>
-+    <OutDir>$(SolutionDir)bin_$(PlatformName)\$(ProjectName)\</OutDir>
-+    <IntDir>$(SolutionDir)bin_$(PlatformName)\$(ProjectName)\</IntDir>
-+  </PropertyGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug' Or '$(Configuration)'=='DebugRelease'">
-+    <ClCompile>
-+      <PrecompiledHeader>
-+      </PrecompiledHeader>
-+      <WarningLevel>Level3</WarningLevel>
-+      <Optimization>Disabled</Optimization>
-+      <PreprocessorDefinitions>HAVE_CONFIG_H;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBBLURAY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions Condition="'$(VisualStudioVersion)' == '12.0'">__STDC_FORMAT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)includes;$(ProjectDir)src;$(ProjectDir)src\libbluray;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <CompileAs Condition="'$(VisualStudioVersion)' == '12.0'">CompileAsCpp</CompileAs>
-+    </ClCompile>
-+    <Link>
-+      <SubSystem>Windows</SubSystem>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <ModuleDefinitionFile>libbluray.def</ModuleDefinitionFile>
-+    </Link>
-+    <PostBuildEvent>
-+      <Command>xcopy /I /Y "$(OutDir)$(TargetName).lib" "$(OutDir)lib\"</Command>
-+      <Message>Copy .lib into library path</Message>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)'=='DebugRelease'">
-+    <ClCompile>
-+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-+    </ClCompile>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
-+    <ClCompile>
-+      <WarningLevel>Level3</WarningLevel>
-+      <Optimization>MaxSpeed</Optimization>
-+      <FunctionLevelLinking>true</FunctionLevelLinking>
-+      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <PreprocessorDefinitions>HAVE_CONFIG_H;WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBBLURAY_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <PreprocessorDefinitions Condition="'$(VisualStudioVersion)' == '12.0'">__STDC_FORMAT_MACROS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)includes;$(ProjectDir)src;$(ProjectDir)src\libbluray;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-+      <EnableEnhancedInstructionSet Condition="'$(Platform)'=='Win32'">StreamingSIMDExtensions</EnableEnhancedInstructionSet>
-+      <CompileAs Condition="'$(VisualStudioVersion)' == '12.0'">CompileAsCpp</CompileAs>
-+    </ClCompile>
-+    <Link>
-+      <SubSystem>Windows</SubSystem>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-+      <OptimizeReferences>true</OptimizeReferences>
-+      <ModuleDefinitionFile>libbluray.def</ModuleDefinitionFile>
-+      <SetChecksum>true</SetChecksum>
-+    </Link>
-+    <PostBuildEvent>
-+      <Command>xcopy /I /Y "$(TargetDir)$(TargetName)$(TargetExt)" "$(OutDir)..\"
-+xcopy /I /Y "$(TargetDir)$(TargetName).lib" "$(OutDir)..\lib\"</Command>
-+      <Message>Copy .dll/.lib into library path</Message>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-+  <ImportGroup Label="ExtensionTargets">
-+  </ImportGroup>
-+</Project>
-\ No newline at end of file
-diff --git a/libbluray.vcxproj.filters b/libbluray.vcxproj.filters
-new file mode 100644
-index 00000000..4352ef05
---- /dev/null
-+++ b/libbluray.vcxproj.filters
-@@ -0,0 +1,359 @@
-+﻿<?xml version="1.0" encoding="utf-8"?>
-+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup>
-+    <Filter Include="Source Files">
-+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-+    </Filter>
-+    <Filter Include="Header Files">
-+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-+    </Filter>
-+    <Filter Include="Resource Files">
-+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-+    </Filter>
-+    <Filter Include="Source Files\util">
-+      <UniqueIdentifier>{1ab0e905-7c04-4090-b385-6363dd1c961c}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\util">
-+      <UniqueIdentifier>{b8fa3348-a089-461f-9ef5-3d9df997b8e5}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\file">
-+      <UniqueIdentifier>{125333e9-0b5e-45f9-a444-f0aaaf547d9b}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\file">
-+      <UniqueIdentifier>{a743058f-f07a-4d0f-bab6-02dc57defda9}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\libbluray">
-+      <UniqueIdentifier>{7dacc7c4-ef59-452b-9e5b-392c9df07c98}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\libbluray">
-+      <UniqueIdentifier>{c7895c81-c186-4d5e-a8ff-645c6d55a731}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\libbluray\bdnav">
-+      <UniqueIdentifier>{c8619466-211b-4c85-9d30-d1b1a822d32e}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\libbluray\bdnav">
-+      <UniqueIdentifier>{8afb6919-994f-4d1f-9638-ce4a06d0b473}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\libbluray\decoders">
-+      <UniqueIdentifier>{0e9086a7-eebf-4b8e-a4fe-b1724d148877}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\libbluray\decoders">
-+      <UniqueIdentifier>{fc5e776b-0f32-493a-b823-240288288502}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\libbluray\hdmv">
-+      <UniqueIdentifier>{96d2d786-cd45-4856-937d-9e6f85ced241}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\libbluray\hdmv">
-+      <UniqueIdentifier>{9f4ea4ae-217a-4d97-a5f3-e561ce1e49cd}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Source Files\libbluray\disc">
-+      <UniqueIdentifier>{09e1b1b8-3aa3-4918-b157-3dfc0554ccbb}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="Header Files\libbluray\disc">
-+      <UniqueIdentifier>{1e02e503-752e-4765-9dfb-8cc67a7b79f8}</UniqueIdentifier>
-+    </Filter>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="src\util\attributes.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\strutl.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\bits.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\log_control.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\logging.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\macro.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\mutex.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\file\dl.h">
-+      <Filter>Header Files\file</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\file\filesystem.h">
-+      <Filter>Header Files\file</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\file\file.h">
-+      <Filter>Header Files\file</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bluray.h">
-+      <Filter>Header Files\libbluray</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\register.h">
-+      <Filter>Header Files\libbluray</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\keys.h">
-+      <Filter>Header Files\libbluray</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\bdparse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\uo_mask_table.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\clpi_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\index_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\meta_data.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\meta_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\mpls_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\navigation.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\sound_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\graphics_controller.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\pg_decode.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\graphics_processor.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\ig.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\ig_decode.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\m2ts_demux.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\overlay.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\pes_buffer.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\pg.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\hdmv\hdmv_insn.h">
-+      <Filter>Header Files\libbluray\hdmv</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\hdmv\mobj_parse.h">
-+      <Filter>Header Files\libbluray\hdmv</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\hdmv\hdmv_vm.h">
-+      <Filter>Header Files\libbluray\hdmv</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\bdid_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\clpi_data.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bdnav\extdata_parse.h">
-+      <Filter>Header Files\libbluray\bdnav</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\textst.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\textst_render.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\textst_decode.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\rle.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\refcnt.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\time.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bluray_internal.h">
-+      <Filter>Header Files\libbluray</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\decoders\m2ts_filter.h">
-+      <Filter>Header Files\libbluray\decoders</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\file\dirs.h">
-+      <Filter>Header Files\file</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\bluray-version.h">
-+      <Filter>Header Files\libbluray</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\array.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\disc\aacs.h">
-+      <Filter>Header Files\libbluray\disc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\disc\bdplus.h">
-+      <Filter>Header Files\libbluray\disc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\disc\dec.h">
-+      <Filter>Header Files\libbluray\disc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\disc\disc.h">
-+      <Filter>Header Files\libbluray\disc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\libbluray\disc\enc_info.h">
-+      <Filter>Header Files\libbluray\disc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\file\mount.h">
-+      <Filter>Header Files\file</Filter>
-+    </ClInclude>
-+    <ClInclude Include="src\util\event_queue.h">
-+      <Filter>Header Files\util</Filter>
-+    </ClInclude>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="src\util\logging.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\strutl.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\filesystem.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bluray.c">
-+      <Filter>Source Files\libbluray</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\register.c">
-+      <Filter>Source Files\libbluray</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\clpi_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\sound_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\index_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\meta_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\mpls_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\navigation.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\graphics_controller.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\pg_decode.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\graphics_processor.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\ig_decode.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\m2ts_demux.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\pes_buffer.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\hdmv\hdmv_vm.c">
-+      <Filter>Source Files\libbluray\hdmv</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\hdmv\mobj_print.c">
-+      <Filter>Source Files\libbluray\hdmv</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\hdmv\mobj_parse.c">
-+      <Filter>Source Files\libbluray\hdmv</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\bdid_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\bdnav\extdata_parse.c">
-+      <Filter>Source Files\libbluray\bdnav</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\bits.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\dir_win32.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\dirs_win32.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\dl_win32.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\textst_decode.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\textst_render.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\refcnt.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\m2ts_filter.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\decoders\rle.c">
-+      <Filter>Source Files\libbluray\decoders</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\file_win32.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\file.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\array.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\mutex.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\disc\aacs.c">
-+      <Filter>Source Files\libbluray\disc</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\disc\bdplus.c">
-+      <Filter>Source Files\libbluray\disc</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\disc\dec.c">
-+      <Filter>Source Files\libbluray\disc</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\libbluray\disc\disc.c">
-+      <Filter>Source Files\libbluray\disc</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\time.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\file\mount.c">
-+      <Filter>Source Files\file</Filter>
-+    </ClCompile>
-+    <ClCompile Include="src\util\event_queue.c">
-+      <Filter>Source Files\util</Filter>
-+    </ClCompile>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <None Include="libbluray.def">
-+      <Filter>Source Files</Filter>
-+    </None>
-+  </ItemGroup>
-+</Project>
-\ No newline at end of file
++AM_CONDITIONAL([ENABLE_UDF], [test $enable_udf = "yes" ])
+ 
+ dnl generate documentation
+ DX_INIT_DOXYGEN(libbluray, doc/doxygen-config, [doc/doxygen])
+@@ -307,5 +321,6 @@ fi
+ fi
+ fi
+ echo "  Metadata support (libxml2):    $with_libxml2"
++echo "  UDF filesystem support:        $enable_udf"
+ echo "  Build examples:                $use_examples"
+ 
+diff --git a/src/libbluray/disc/disc.c b/src/libbluray/disc/disc.c
+index be6a279d..a64f914c 100644
+--- a/src/libbluray/disc/disc.c
++++ b/src/libbluray/disc/disc.c
+@@ -38,7 +38,9 @@
+ #include <stdio.h>
+ #include <string.h>
+ 
++#ifdef ENABLE_UDF
+ #include "udf_fs.h"
++#endif
+ 
+ struct bd_disc {
+     BD_MUTEX  ovl_mutex;     /* protect access to overlay root */
+@@ -316,6 +318,7 @@ BD_DISC *disc_open(const char *device_path,
+     _set_paths(p, device_path);
+ 
+     /* check if disc root directory can be opened. If not, treat it as device/image file. */
++#ifdef ENABLE_UDF
+     BD_DIR_H *dp_img = device_path ? dir_open(device_path) : NULL;
+     if (!dp_img) {
+         void *udf = udf_image_open(device_path, p_fs ? p_fs->fs_handle : NULL, p_fs ? p_fs->read_blocks : NULL);
+@@ -336,6 +339,7 @@ BD_DISC *disc_open(const char *device_path,
+         dir_close(dp_img);
+         BD_DEBUG(DBG_FILE, "%s does not seem to be image file or device node\n", device_path);
+     }
++#endif
+ 
+     struct dec_dev dev = { p->fs_handle, p->pf_file_open_bdrom, p, (file_openFp)disc_open_path, p->disc_root, device_path };
+     p->dec = dec_init(&dev, enc_info, keyfile_path, regs, psr_read, psr_write);
+
+From 115aa55f2dde5889ec94d756e9cd3f59a5d5e166 Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Thu, 17 Mar 2011 17:22:00 +0100
+Subject: [PATCH 04/14] Optimized file I/O for chained usage with libavformat
+
+---
+ libbluray.def             |  1 +
+ src/file/dir_win32.c      |  4 ++--
+ src/file/dirs_win32.c     |  6 +++---
+ src/file/dl_win32.c       |  4 ++--
+ src/file/file_win32.c     |  7 +++++--
+ src/libbluray/bluray.c    | 19 +++++++++++++++++++
+ src/libbluray/bluray.h    | 10 ++++++++++
+ src/libbluray/disc/disc.c |  2 +-
+ 8 files changed, 43 insertions(+), 10 deletions(-)
+
 diff --git a/src/file/dir_win32.c b/src/file/dir_win32.c
 index 5cbc3c86..40308966 100644
 --- a/src/file/dir_win32.c
@@ -1235,7 +910,7 @@ index e165feac..3d07251a 100644
      if (!dir) {
          // first call
 diff --git a/src/file/dl_win32.c b/src/file/dl_win32.c
-index 6155ad6a..3a09fa1c 100644
+index 6155ad6a..c7e3eee0 100644
 --- a/src/file/dl_win32.c
 +++ b/src/file/dl_win32.c
 @@ -57,7 +57,7 @@ void *dl_dlopen(const char *path, const char *version)
@@ -1247,17 +922,6 @@ index 6155ad6a..3a09fa1c 100644
      char *name;
      void *result;
      int iresult;
-@@ -81,8 +81,8 @@ void *dl_dlopen(const char *path, const char *version)
-     if (GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")),
-                        "SetDefaultDllDirectories") != NULL)
- #endif
--        flags = LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
--                LOAD_LIBRARY_SEARCH_SYSTEM32;
-+        flags = 0xA00; /*LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
-+                LOAD_LIBRARY_SEARCH_SYSTEM32;*/
- 
-     result = LoadLibraryExW(wname, NULL, flags);
- 
 @@ -125,7 +125,7 @@ const char *dl_get_path(void)
      if (!initialized) {
          initialized = 1;
@@ -1293,38 +957,215 @@ index 11aaf820..f5518636 100644
      file = calloc(1, sizeof(BD_FILE_H));
      if (!file) {
          BD_DEBUG(DBG_FILE | DBG_CRIT, "Error opening file %s (out of memory)\n", filename);
-diff --git a/src/libbluray/bdnav/index_parse.c b/src/libbluray/bdnav/index_parse.c
-index 6a0f5a01..56b3d949 100644
---- a/src/libbluray/bdnav/index_parse.c
-+++ b/src/libbluray/bdnav/index_parse.c
-@@ -104,12 +104,11 @@ static int _parse_index(BITSTREAM *bs, INDX_ROOT *index)
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index 8adbd71d..7094915a 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -1678,6 +1678,25 @@ int64_t bd_seek_time(BLURAY *bd, uint64_t tick)
+     return bd->s_pos;
+ }
  
-     index->num_titles = bs_read(bs, 16);
-     if (!index->num_titles) {
--        BD_DEBUG(DBG_CRIT, "empty index\n");
--        return 0;
-+        BD_DEBUG(DBG_NAV, "empty index\n");
++int64_t bd_find_seek_point(BLURAY *bd, uint64_t tick)
++{
++  uint32_t clip_pkt, out_pkt;
++  NAV_CLIP *clip;
++
++  tick /= 2;
++
++  if (bd->title &&
++    tick < bd->title->duration) {
++
++      // Find the closest access unit to the requested position
++      clip = nav_time_search(bd->title, (uint32_t)tick, &clip_pkt, &out_pkt);
++
++      return (int64_t)out_pkt * 192;
++  }
++
++  return bd->s_pos;
++}
++
+ uint64_t bd_tell_time(BLURAY *bd)
+ {
+     uint32_t clip_pkt = 0, out_pkt = 0, out_time = 0;
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 60c36a40..40f06d49 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -480,6 +480,16 @@ int bd_select_playlist(BLURAY *bd, uint32_t playlist);
+  */
+ uint32_t bd_get_current_title(BLURAY *bd);
+ 
++/**
++ *
++ * Find the byte position to specific time in 90Khz ticks
++ *
++ * @param bd    BLURAY ojbect
++ * @param tick  tick count
++ * @return byte position
++ */
++int64_t bd_find_seek_point(BLURAY *bd, uint64_t tick);
++
+ /**
+  *
+  *  Read from currently selected title file, decrypt if possible
+diff --git a/src/libbluray/disc/disc.c b/src/libbluray/disc/disc.c
+index a64f914c..e96539a8 100644
+--- a/src/libbluray/disc/disc.c
++++ b/src/libbluray/disc/disc.c
+@@ -77,7 +77,7 @@ static BD_FILE_H *_bdrom_open_path(void *p, const char *rel_path)
+         return NULL;
      }
  
-     index->titles = calloc(index->num_titles, sizeof(INDX_TITLE));
--    if (!index->titles) {
-+    if (index->num_titles && !index->titles) {
-         BD_DEBUG(DBG_CRIT, "out of memory\n");
-         return 0;
-     }
+-    fp = file_open(abs_path, "rb");
++    fp = file_open(abs_path, "rbS");
+     X_FREE(abs_path);
+ 
+     return fp;
+
+From ae3c64932246e2c257b15202ec3e894fd9b06b8d Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Mon, 28 Mar 2011 22:39:52 +0200
+Subject: [PATCH 05/14] Added bd_get_clip_infos
+
+This function allows for querying information directly related to the
+clips inside a title.
+---
+ libbluray.def          |  1 +
+ src/libbluray/bluray.c | 17 +++++++++++++++++
+ src/libbluray/bluray.h | 12 ++++++++++++
+ 3 files changed, 30 insertions(+)
+
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index 7094915a..de4984d1 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -3938,3 +3938,20 @@ void bd_free_bdjo(struct bdjo_data *obj)
+     (void)obj;
+ #endif
+ }
++
++int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint64_t *stream_start_time, uint64_t *pos, uint64_t *duration)
++{
++    if (bd && bd->title && bd->title->clip_list.count > clip) {
++      if (clip_start_time)
++        *clip_start_time = (uint64_t)bd->title->clip_list.clip[clip].title_time << 1;
++      if (stream_start_time)
++        *stream_start_time = (uint64_t)bd->title->clip_list.clip[clip].in_time << 1;
++      if (pos)
++        *pos = (uint64_t)bd->title->clip_list.clip[clip].title_pkt * 192;
++      if (duration)
++        *duration = (uint64_t)bd->title->clip_list.clip[clip].duration << 1;
++
++      return 1;
++    }
++    return 0;
++}
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 40f06d49..3a19e7ce 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -1102,6 +1102,18 @@ void bd_stop_bdj(BLURAY *bd); // shutdown BD-J and clean up resources
+  */
+ int bd_read_file(BLURAY *, const char *path, void **data, int64_t *size);
+ 
++/**
++ *
++ * Get information about the clip
++ *
++ * @param bd  BLURAY object
++ * @param clip clip index
++ * @param clip_start_time start of the clip (in the total title) (in 90khz)
++ * @param stream_start_time first pts in the clip (in 90khz)
++ * @param byte position of the clip (absolute)
++ * @param duration duration of the clip (in 90khz)
++ */
++int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint64_t *stream_start_time, uint64_t *pos, uint64_t *duration);
+ 
+ #ifdef __cplusplus
+ }
+
+From ed499a6fc9901d9a89662240df3486a15b996151 Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Mon, 24 Sep 2012 02:01:25 +0200
+Subject: [PATCH 06/14] Include clpi_data.h to make debugging easier.
+
+---
+ src/libbluray/bluray.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 3a19e7ce..094df699 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -32,6 +32,7 @@ extern "C" {
+  */
+ 
+ #include <stdint.h>
++#include "bdnav/clpi_data.h"
+ 
+ #define TITLES_ALL              0    /**< all titles. */
+ #define TITLES_FILTER_DUP_TITLE 0x01 /**< remove duplicate titles. */
+@@ -1049,7 +1050,6 @@ int bd_mouse_select(BLURAY *bd, int64_t pts, uint16_t x, uint16_t y);
+ 
+ /* access to internal information */
+ 
+-struct clpi_cl;
+ /**
+  *
+  *  Get copy of clip information for requested playitem.
+
+From cf108eba7cec5ad818ad33d86dde4a93fe6e7a4c Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Tue, 25 Nov 2014 11:57:51 +0100
+Subject: [PATCH 07/14] Support 0240 MPLS and CLPI signatures
+
+---
+ src/libbluray/bdnav/bdmv_parse.c | 1 +
+ src/libbluray/bdnav/bdmv_parse.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/src/libbluray/bdnav/bdmv_parse.c b/src/libbluray/bdnav/bdmv_parse.c
+index e298ca3b..2c310aa1 100644
+--- a/src/libbluray/bdnav/bdmv_parse.c
++++ b/src/libbluray/bdnav/bdmv_parse.c
+@@ -59,6 +59,7 @@ int bdmv_parse_header(BITSTREAM *bs, uint32_t type, uint32_t *version)
+     switch (ver) {
+         case BDMV_VERSION_0100:
+         case BDMV_VERSION_0200:
++        case BDMV_VERSION_0240:
+         case BDMV_VERSION_0300:
+             break;
+         default:
+diff --git a/src/libbluray/bdnav/bdmv_parse.h b/src/libbluray/bdnav/bdmv_parse.h
+index 8f953a3d..9dbbed56 100644
+--- a/src/libbluray/bdnav/bdmv_parse.h
++++ b/src/libbluray/bdnav/bdmv_parse.h
+@@ -27,6 +27,7 @@
+ 
+ #define BDMV_VERSION_0100 ('0' << 24 | '1' << 16 | '0' << 8 | '0')
+ #define BDMV_VERSION_0200 ('0' << 24 | '2' << 16 | '0' << 8 | '0')
++#define BDMV_VERSION_0240 ('0' << 24 | '2' << 16 | '4' << 8 | '0')
+ #define BDMV_VERSION_0300 ('0' << 24 | '3' << 16 | '0' << 8 | '0')
+ 
+ BD_PRIVATE int bdmv_parse_header(BITSTREAM *bs, uint32_t type, uint32_t *version);
+
+From 40fd4a080d9c28c667201ac10dc915af95a46f3f Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Tue, 16 Feb 2016 15:37:09 +0100
+Subject: [PATCH 08/14] Export the MPLS MVC_Base_View_R_flag
+
+---
+ src/libbluray/bdnav/mpls_data.h  | 1 +
+ src/libbluray/bdnav/mpls_parse.c | 3 ++-
+ src/libbluray/bluray.c           | 2 ++
+ src/libbluray/bluray.h           | 2 ++
+ 4 files changed, 7 insertions(+), 1 deletion(-)
+
 diff --git a/src/libbluray/bdnav/mpls_data.h b/src/libbluray/bdnav/mpls_data.h
-index f148d513..b6a8cdd0 100644
+index 2ceac92f..1529f079 100644
 --- a/src/libbluray/bdnav/mpls_data.h
 +++ b/src/libbluray/bdnav/mpls_data.h
-@@ -47,6 +47,7 @@ typedef struct
-     uint8_t         sv_num_pip_pg_ref;
-     uint8_t        *sv_secondary_audio_ref;
-     uint8_t        *sv_pip_pg_ref;
-+    uint8_t         ss_offset_sequence_id;
- } MPLS_STREAM;
- 
- typedef struct
-@@ -107,6 +108,7 @@ typedef struct
+@@ -107,6 +107,7 @@ typedef struct
      uint8_t         random_access_flag;
      uint8_t         audio_mix_flag;
      uint8_t         lossless_bypass_flag;
@@ -1333,10 +1174,10 @@ index f148d513..b6a8cdd0 100644
  
  typedef struct
 diff --git a/src/libbluray/bdnav/mpls_parse.c b/src/libbluray/bdnav/mpls_parse.c
-index 82b61854..92ea99a7 100644
+index 358b6342..1221e8f7 100644
 --- a/src/libbluray/bdnav/mpls_parse.c
 +++ b/src/libbluray/bdnav/mpls_parse.c
-@@ -92,9 +93,10 @@ _parse_appinfo(BITSTREAM *bits, MPLS_AI *ai)
+@@ -77,9 +77,10 @@ _parse_appinfo(BITSTREAM *bits, MPLS_AI *ai)
      ai->random_access_flag = bs_read(bits, 1);
      ai->audio_mix_flag = bs_read(bits, 1);
      ai->lossless_bypass_flag = bs_read(bits, 1);
@@ -1348,7 +1189,145 @@ index 82b61854..92ea99a7 100644
      bs_seek_byte(bits, pos + len);
  #endif
      return 1;
-@@ -218,6 +221,7 @@ _parse_stream(BITSTREAM *bits, MPLS_STREAM *s)
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index de4984d1..ea46c4d1 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -2753,6 +2753,8 @@ static BLURAY_TITLE_INFO* _fill_title_info(NAV_TITLE* title, uint32_t title_idx,
+         }
+     }
+ 
++    title_info->mvc_base_view_r_flag = title->pl->app_info.mvc_base_view_r_flag;
++
+     return title_info;
+ 
+  error:
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 094df699..8e84e841 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -275,6 +275,8 @@ typedef struct bd_title_info {
+     BLURAY_CLIP_INFO     *clips;
+     BLURAY_TITLE_CHAPTER *chapters;
+     BLURAY_TITLE_MARK    *marks;
++
++    uint8_t              mvc_base_view_r_flag;
+ } BLURAY_TITLE_INFO;
+ 
+ /*
+
+From cb8b698f23684cf930de940bca1720c34fd14333 Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Tue, 16 Feb 2016 16:04:45 +0100
+Subject: [PATCH 09/14] Export the clip id in BLURAY_CLIP_INFO
+
+---
+ src/libbluray/bluray.c | 1 +
+ src/libbluray/bluray.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index ea46c4d1..1d915350 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -2729,6 +2729,7 @@ static BLURAY_TITLE_INFO* _fill_title_info(NAV_TITLE* title, uint32_t title_idx,
+             NAV_CLIP *nc = &title->clip_list.clip[ii];
+ 
+             memcpy(ci->clip_id, pi->clip->clip_id, sizeof(ci->clip_id));
++            ci->idx = nc->clip_id;
+             ci->pkt_count = nc->end_pkt - nc->start_pkt;
+             ci->start_time = (uint64_t)nc->title_time * 2;
+             ci->in_time = (uint64_t)pi->in_time * 2;
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index 8e84e841..aacfde5a 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -225,6 +225,7 @@ typedef struct bd_stream_info {
+ } BLURAY_STREAM_INFO;
+ 
+ typedef struct bd_clip {
++    uint32_t           idx;
+     uint32_t           pkt_count;
+     uint8_t            still_mode;
+     uint16_t           still_time;  /* seconds */
+
+From e4f67698c69ab32532fdc8ac5e347747b5ff07b6 Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Tue, 16 Feb 2016 19:09:21 +0100
+Subject: [PATCH 10/14] Add bd_get_title_mpls to retrieve the full MPLS
+ information from a title
+
+---
+ libbluray.def          |  1 +
+ src/libbluray/bluray.c |  8 ++++++++
+ src/libbluray/bluray.h | 10 ++++++++++
+ 3 files changed, 19 insertions(+)
+
+diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
+index 1d915350..1a9d3315 100644
+--- a/src/libbluray/bluray.c
++++ b/src/libbluray/bluray.c
+@@ -3958,3 +3958,11 @@ int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint
+     }
+     return 0;
+ }
++
++struct mpls_pl* bd_get_title_mpls(BLURAY * bd)
++{
++  if (bd && bd->title) {
++    return bd->title->pl;
++  }
++  return NULL;
++}
+diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
+index aacfde5a..0cd60478 100644
+--- a/src/libbluray/bluray.h
++++ b/src/libbluray/bluray.h
+@@ -1118,6 +1118,16 @@ int bd_read_file(BLURAY *, const char *path, void **data, int64_t *size);
+  */
+ int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint64_t *stream_start_time, uint64_t *pos, uint64_t *duration);
+ 
++/**
++ * Get the MPLS struct of the current title
++ *
++ * @param bd BLURAY object
++ * @return the MPLS struct
++ *
++ * Lifetime of the MPLS pointer is limited to the lifetime of the BD title
++ */
++struct mpls_pl* bd_get_title_mpls(BLURAY * bd);
++
+ #ifdef __cplusplus
+ }
+ #endif
+
+From 8911ff8bcb1f77d9914d7a605762a964803c638b Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Mon, 22 Feb 2016 12:30:20 +0100
+Subject: [PATCH 11/14] Parse offset sequence id from STN_table_SS
+
+---
+ src/libbluray/bdnav/mpls_data.h  |  1 +
+ src/libbluray/bdnav/mpls_parse.c | 96 +++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 96 insertions(+), 1 deletion(-)
+
+diff --git a/src/libbluray/bdnav/mpls_data.h b/src/libbluray/bdnav/mpls_data.h
+index 1529f079..d23d40ea 100644
+--- a/src/libbluray/bdnav/mpls_data.h
++++ b/src/libbluray/bdnav/mpls_data.h
+@@ -47,6 +47,7 @@ typedef struct
+     uint8_t         sv_num_pip_pg_ref;
+     uint8_t        *sv_secondary_audio_ref;
+     uint8_t        *sv_pip_pg_ref;
++    uint8_t         ss_offset_sequence_id;
+ } MPLS_STREAM;
+ 
+ typedef struct
+diff --git a/src/libbluray/bdnav/mpls_parse.c b/src/libbluray/bdnav/mpls_parse.c
+index 1221e8f7..569c015c 100644
+--- a/src/libbluray/bdnav/mpls_parse.c
++++ b/src/libbluray/bdnav/mpls_parse.c
+@@ -195,6 +195,7 @@ _parse_stream(BITSTREAM *bits, MPLS_STREAM *s)
              break;
      };
      s->lang[3] = '\0';
@@ -1356,10 +1335,11 @@ index 82b61854..92ea99a7 100644
  
      if (bs_seek_byte(bits, pos + len) < 0) {
          return 0;
-@@ -911,6 +915,99 @@ _parse_subpath_extension(BITSTREAM *bits, MPLS_PL *pl)
+@@ -959,6 +960,99 @@ _parse_subpath_extension(BITSTREAM *bits, MPLS_PL *pl)
+     return 0;
  }
  
- static int
++static int
 +_parse_stn_ss_extension(BITSTREAM *bits, MPLS_PL *pl)
 +{
 +    int ii, s;
@@ -1452,11 +1432,10 @@ index 82b61854..92ea99a7 100644
 +    return 0;
 +}
 +
-+static int
+ static int
  _parse_mpls_extension(BITSTREAM *bits, int id1, int id2, void *handle)
  {
-     MPLS_PL *pl = (MPLS_PL*)handle;
-@@ -924,7 +1021,7 @@ _parse_mpls_extension(BITSTREAM *bits, int id1, int id2, void *handle)
+@@ -973,7 +1067,7 @@ _parse_mpls_extension(BITSTREAM *bits, int id1, int id2, void *handle)
  
      if (id1 == 2) {
          if (id2 == 1) {
@@ -1465,175 +1444,92 @@ index 82b61854..92ea99a7 100644
          }
          if (id2 == 2) {
              // SubPath entries extension
-diff --git a/src/libbluray/bluray.c b/src/libbluray/bluray.c
-index ce4854d8..94565278 100644
---- a/src/libbluray/bluray.c
-+++ b/src/libbluray/bluray.c
-@@ -1651,6 +1651,25 @@ int64_t bd_seek_time(BLURAY *bd, uint64_t tick)
-     return bd->s_pos;
- }
+
+From 6a3708517bd925e533035f9f9f83f8463ac2c21a Mon Sep 17 00:00:00 2001
+From: Hendrik Leppkes <h.leppkes@gmail.com>
+Date: Tue, 7 Mar 2017 03:25:04 +0100
+Subject: [PATCH 12/14] index_parse: allow an index without explicitly signaled
+ titles
+
+This still allows the first_play/top_menu titles to play, and is used on
+valid discs without a (complex) menu structure.
+---
+ src/libbluray/bdnav/index_parse.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/src/libbluray/bdnav/index_parse.c b/src/libbluray/bdnav/index_parse.c
+index 0deb6176..300a1bf9 100644
+--- a/src/libbluray/bdnav/index_parse.c
++++ b/src/libbluray/bdnav/index_parse.c
+@@ -105,12 +105,11 @@ static int _parse_index(BITSTREAM *bs, INDX_ROOT *index)
  
-+int64_t bd_find_seek_point(BLURAY *bd, uint64_t tick)
-+{
-+  uint32_t clip_pkt, out_pkt;
-+  NAV_CLIP *clip;
-+
-+  tick /= 2;
-+
-+  if (bd->title &&
-+    tick < bd->title->duration) {
-+
-+      // Find the closest access unit to the requested position
-+      clip = nav_time_search(bd->title, (uint32_t)tick, &clip_pkt, &out_pkt);
-+
-+      return (int64_t)out_pkt * 192;
-+  }
-+
-+  return bd->s_pos;
-+}
-+
- uint64_t bd_tell_time(BLURAY *bd)
- {
-     uint32_t clip_pkt = 0, out_pkt = 0, out_time = 0;
-@@ -2648,6 +2667,7 @@ static BLURAY_TITLE_INFO* _fill_title_info(NAV_TITLE* title, uint32_t title_idx,
-             NAV_CLIP *nc = &title->clip_list.clip[ii];
- 
-             memcpy(ci->clip_id, pi->clip->clip_id, sizeof(ci->clip_id));
-+            ci->idx = nc->clip_id;
-             ci->pkt_count = nc->end_pkt - nc->start_pkt;
-             ci->start_time = (uint64_t)nc->title_time * 2;
-             ci->in_time = (uint64_t)pi->in_time * 2;
-@@ -2672,6 +2692,8 @@ static BLURAY_TITLE_INFO* _fill_title_info(NAV_TITLE* title, uint32_t title_idx,
-         }
+     index->num_titles = bs_read(bs, 16);
+     if (!index->num_titles) {
+-        BD_DEBUG(DBG_CRIT, "empty index\n");
+-        return 0;
++        BD_DEBUG(DBG_NAV, "empty index\n");
      }
  
-+    title_info->mvc_base_view_r_flag = title->pl->app_info.mvc_base_view_r_flag;
-+
-     return title_info;
- 
-  error:
-@@ -3825,3 +3847,28 @@ void bd_free_bdjo(struct bdjo_data *obj)
- {
-     bdjo_free(&obj);
- }
-+
-+int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint64_t *stream_start_time, uint64_t *pos, uint64_t *duration)
-+{
-+    if (bd && bd->title && bd->title->clip_list.count > clip) {
-+      if (clip_start_time)
-+        *clip_start_time = (uint64_t)bd->title->clip_list.clip[clip].title_time << 1;
-+      if (stream_start_time)
-+        *stream_start_time = (uint64_t)bd->title->clip_list.clip[clip].in_time << 1;
-+      if (pos)
-+        *pos = (uint64_t)bd->title->clip_list.clip[clip].title_pkt * 192;
-+      if (duration)
-+        *duration = (uint64_t)bd->title->clip_list.clip[clip].duration << 1;
-+
-+      return 1;
+     index->titles = calloc(index->num_titles, sizeof(INDX_TITLE));
+-    if (!index->titles) {
++    if (index->num_titles && !index->titles) {
+         BD_DEBUG(DBG_CRIT, "out of memory\n");
+         return 0;
+     }
+
+From dd318447f5342bfe0ce1f58ebc7b20e2fe453ad8 Mon Sep 17 00:00:00 2001
+From: Sebastiii <sebastiii@team-mediaportal.com>
+Date: Sun, 17 Dec 2017 15:53:07 +0100
+Subject: [PATCH 13/14] Master_libbluray : Based LAV Nevcairiel libbluray and
+ patched for MP BD-J from Tourettes
+
+Rebase : Libbluray V1.0.2 update
+remove twin define in config.h
+
+using freetype and link to his official repo
+update submodule freetype2 to 2017-12-09
+---
+ 3rd_party/freetype2            |  1 +
+ config.h                       | 12 ++++----
+ libbluray.def                  |  8 +++++
+ 3 files changed, 21 insertions(+), 4 deletions(-)
+ create mode 160000 3rd_party/freetype2
+
+diff --git a/3rd_party/freetype2 b/3rd_party/freetype2
+new file mode 160000
+index 00000000..a998d484
+--- /dev/null
++++ b/3rd_party/freetype2
+@@ -0,0 +1 @@
++Subproject commit a998d48401fbf8872265e5460cadfe4c8daca4ba
+From 01dec97b56ae0d2eb9dfc90476fd537662219464 Mon Sep 17 00:00:00 2001
+From: mm1352000 <music_man1352000@yahoo.com.au>
+Date: Mon, 18 Dec 2017 20:12:17 +0100
+Subject: [PATCH 14/14] Fix typo for acces permissions to (replace "z" by "s")
+ : hasReadOrganisationAccessRight() hasWriteOrganisationAccessRight()
+
+Signed-off-by: Azzuro <Azzuro@users.noreply.github.com>
+---
+ .../bdj/java/org/dvb/io/persistent/FileAccessPermissions.java     | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/libbluray/bdj/java/org/dvb/io/persistent/FileAccessPermissions.java b/src/libbluray/bdj/java/org/dvb/io/persistent/FileAccessPermissions.java
+index 6458b5eb..3c0813e7 100644
+--- a/src/libbluray/bdj/java/org/dvb/io/persistent/FileAccessPermissions.java
++++ b/src/libbluray/bdj/java/org/dvb/io/persistent/FileAccessPermissions.java
+@@ -46,6 +46,14 @@ public boolean hasReadOrganizationAccessRight() {
+     public boolean hasWriteOrganizationAccessRight() {
+         return writeOrganization;
+     }
++	
++	public boolean hasReadOrganisationAccessRight() {
++        return readOrganization;
 +    }
-+    return 0;
-+}
 +
-+struct mpls_pl* bd_get_title_mpls(BLURAY * bd)
-+{
-+  if (bd && bd->title) {
-+    return bd->title->pl;
-+  }
-+  return NULL;
-+}
-diff --git a/src/libbluray/bluray.h b/src/libbluray/bluray.h
-index b7b52e55..744a6926 100644
---- a/src/libbluray/bluray.h
-+++ b/src/libbluray/bluray.h
-@@ -32,6 +32,7 @@ extern "C" {
-  */
++    public boolean hasWriteOrganisationAccessRight() {
++        return writeOrganization;
++    }
  
- #include <stdint.h>
-+#include "bdnav/clpi_data.h"
- 
- #define TITLES_ALL              0    /**< all titles. */
- #define TITLES_FILTER_DUP_TITLE 0x01 /**< remove duplicate titles. */
-@@ -222,6 +223,7 @@ typedef struct bd_stream_info {
- } BLURAY_STREAM_INFO;
- 
- typedef struct bd_clip {
-+    uint32_t           idx;
-     uint32_t           pkt_count;
-     uint8_t            still_mode;
-     uint16_t           still_time;  /* seconds */
-@@ -272,6 +274,8 @@ typedef struct bd_title_info {
-     BLURAY_CLIP_INFO     *clips;
-     BLURAY_TITLE_CHAPTER *chapters;
-     BLURAY_TITLE_MARK    *marks;
-+
-+    uint8_t              mvc_base_view_r_flag;
- } BLURAY_TITLE_INFO;
- 
- /*
-@@ -480,6 +484,16 @@ uint32_t bd_get_current_title(BLURAY *bd);
- 
- /**
-  *
-+ * Find the byte position to specific time in 90Khz ticks
-+ *
-+ * @param bd    BLURAY ojbect
-+ * @param tick  tick count
-+ * @return byte position
-+ */
-+int64_t bd_find_seek_point(BLURAY *bd, uint64_t tick);
-+
-+/**
-+ *
-  *  Read from currently selected title file, decrypt if possible
-  *
-  * @param bd  BLURAY object
-@@ -1033,7 +1047,6 @@ int bd_mouse_select(BLURAY *bd, int64_t pts, uint16_t x, uint16_t y);
- 
- /* access to internal information */
- 
--struct clpi_cl;
- /**
-  *
-  *  Get copy of clip information for requested playitem.
-@@ -1086,6 +1099,28 @@ void bd_stop_bdj(BLURAY *bd); // shutdown BD-J and clean up resources
-  */
- int bd_read_file(BLURAY *, const char *path, void **data, int64_t *size);
- 
-+/**
-+ *
-+ * Get information about the clip
-+ *
-+ * @param bd  BLURAY object
-+ * @param clip clip index
-+ * @param clip_start_time start of the clip (in the total title) (in 90khz)
-+ * @param stream_start_time first pts in the clip (in 90khz)
-+ * @param byte position of the clip (absolute)
-+ * @param duration duration of the clip (in 90khz)
-+ */
-+int bd_get_clip_infos(BLURAY *bd, unsigned clip, uint64_t *clip_start_time, uint64_t *stream_start_time, uint64_t *pos, uint64_t *duration);
-+
-+/**
-+ * Get the MPLS struct of the current title
-+ *
-+ * @param bd BLURAY object
-+ * @return the MPLS struct
-+ *
-+ * Lifetime of the MPLS pointer is limited to the lifetime of the BD title
-+ */
-+struct mpls_pl* bd_get_title_mpls(BLURAY * bd);
- 
- #ifdef __cplusplus
- }
-diff --git a/src/libbluray/disc/disc.c b/src/libbluray/disc/disc.c
-index be6a279d..8ed14e64 100644
---- a/src/libbluray/disc/disc.c
-+++ b/src/libbluray/disc/disc.c
-@@ -75,7 +75,7 @@ static BD_FILE_H *_bdrom_open_path(void *p, const char *rel_path)
-         return NULL;
-     }
- 
--    fp = file_open(abs_path, "rb");
-+    fp = file_open(abs_path, "rbS");
-     X_FREE(abs_path);
- 
-     return fp;
+     public boolean hasReadApplicationAccessRight() {
+         return readApplication;
+
