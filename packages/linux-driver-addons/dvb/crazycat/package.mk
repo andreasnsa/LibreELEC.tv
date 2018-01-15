@@ -54,7 +54,7 @@ make_target() {
     if [ -f $PKG_DIR/config/generic.config ]; then
       cp $PKG_DIR/config/generic.config v4l/.config
     fi
-  elise
+  else
     if [ -f $PKG_DIR/config/usb.config ]; then
       cp $PKG_DIR/config/usb.config v4l/.config
     fi
