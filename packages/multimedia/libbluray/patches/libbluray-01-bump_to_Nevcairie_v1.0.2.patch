@@ -15,7 +15,34 @@ diff --git a/Makefile.am b/Makefile.am
 index 04365fd9..a4c55bf8 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -224,6 +224,7 @@ pkginclude_HEADERS = \
+@@ -212,6 +212,15 @@ noinst_HEADERS = \
+ 	jni/win32/jni_md.h \
+ 	jni/darwin/jni_md.h
+ 
++
++bdnavdir=$(pkgincludedir)/bdnav
++bdnav_HEADERS = \
++	src/libbluray/bdnav/clpi_data.h
++
++utildir=$(pkgincludedir)/../util
++util_HEADERS = \
++	src/util/attributes.h
++
+ pkginclude_HEADERS = \
+ 	src/file/filesystem.h \
+ 	src/libbluray/bluray.h \
+@@ -219,6 +228,10 @@ pkginclude_HEADERS = \
+ 	src/libbluray/keys.h \
+ 	src/libbluray/player_settings.h \
+ 	src/libbluray/bdnav/clpi_data.h \
++	src/libbluray/bdnav/clpi_parse.h \
++	src/libbluray/bdnav/mpls_parse.h \
++	src/libbluray/bdnav/mpls_data.h \
++	src/libbluray/bdnav/uo_mask_table.h \
+ 	src/libbluray/bdnav/meta_data.h \
+ 	src/libbluray/decoders/overlay.h \
+ 	src/util/log_control.h
+@@ -224,6 +237,7 @@ pkginclude_HEADERS = \
  	src/util/log_control.h
  
  
@@ -748,14 +775,6 @@ index a4c55bf8..ff15527b 100644
  
  if HAVE_DARWIN
  libbluray_la_SOURCES+= \
-@@ -223,7 +230,6 @@ pkginclude_HEADERS = \
- 	src/libbluray/decoders/overlay.h \
- 	src/util/log_control.h
- 
--
- if USING_BDJAVA
- if USING_BDJAVA_BUILD_JAR
- jardir=$(datadir)/java/
 diff --git a/configure.ac b/configure.ac
 index 0774bfd2..15f53ca2 100644
 --- a/configure.ac
