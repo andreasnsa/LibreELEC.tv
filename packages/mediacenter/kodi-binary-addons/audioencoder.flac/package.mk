@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="audioencoder.flac"
-PKG_VERSION="817e0de"
-PKG_SHA256="c122f4e09d38cfde167386376ed55760414ad4a742ea56f62e99d8306fe9194b"
-PKG_REV="2"
+PKG_VERSION="f7a8daa"
+PKG_SHA256="8ccab047baac58e2d965aeb6fb237cd9d0ab9fdbd644b34e2bf5300244fd5b05"
+PKG_REV="3"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
