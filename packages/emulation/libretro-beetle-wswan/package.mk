@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-beetle-wswan"
-PKG_VERSION="3d6e700"
-PKG_SHA256="23584a6348d254e62bc770ac9232e8c24c238890970ba81051bbbefd8cb0f5b3"
+PKG_VERSION="2343cf3"
+PKG_SHA256="c01351dc9dfca12b87a4af9620c1967fba41ae2fc3710218349a5737bbda0268"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv2"
 PKG_SITE="https://github.com/libretro/beetle-wswan-libretro"
