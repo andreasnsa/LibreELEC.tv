@@ -1,0 +1,108 @@
+From edf946900914e8dc0bc8cff51f8c2acb0af2717e Mon Sep 17 00:00:00 2001
+From: kszaq <kszaquitto@gmail.com>
+Date: Wed, 10 Jan 2018 21:30:17 +0100
+Subject: [PATCH] drivers/amlogic/mailbox: add setup routine to set max CPU
+ frequency of DVFS table
+
+Inspired by https://github.com/hardkernel/linux/commit/dee146cbbb8428b073fba85390577590fc365d86
+
+This patch allows to set maximum CPU frequency in boot.ini for Odroid-C2
+and limits maximum core frequency to 1.536 GHz (S905)/1.512 GHz (S905X)
+if no default set.
+
+max_freq_dvfs is set to 1500000000 to stop on first freq over 1.5 GHz.
+
+As a bonus, it fixes booting Khadas VIM board.
+
+S905 (Odroid-C2):
+[    0.000000@0] dvfs [get_max_freq] - max_freq : 1536000000
+[    0.050180@0] dvfs [scpi_dvfs_get_opps] - buf.opp[0].freq_hz = 100000000
+[    0.050190@0] dvfs [scpi_dvfs_get_opps] - buf.opp[1].freq_hz = 250000000
+[    0.050198@0] dvfs [scpi_dvfs_get_opps] - buf.opp[2].freq_hz = 500000000
+[    0.050205@0] dvfs [scpi_dvfs_get_opps] - buf.opp[3].freq_hz = 1000000000
+[    0.050213@0] dvfs [scpi_dvfs_get_opps] - buf.opp[4].freq_hz = 1296000000
+[    0.050220@0] dvfs [scpi_dvfs_get_opps] - buf.opp[5].freq_hz = 1536000000
+[    0.050228@0] dvfs [scpi_dvfs_get_opps] - new count 6, max_freq 1536000000
+
+S905X:
+[    0.070854@0] dvfs [scpi_dvfs_get_opps] - buf.opp[0].freq_hz = 100000000
+[    0.070867@0] dvfs [scpi_dvfs_get_opps] - buf.opp[1].freq_hz = 250000000
+[    0.070876@0] dvfs [scpi_dvfs_get_opps] - buf.opp[2].freq_hz = 500000000
+[    0.070885@0] dvfs [scpi_dvfs_get_opps] - buf.opp[3].freq_hz = 667000000
+[    0.070894@0] dvfs [scpi_dvfs_get_opps] - buf.opp[4].freq_hz = 1000000000
+[    0.070903@0] dvfs [scpi_dvfs_get_opps] - buf.opp[5].freq_hz = 1200000000
+[    0.070912@0] dvfs [scpi_dvfs_get_opps] - buf.opp[6].freq_hz = 1512000000
+[    0.070921@0] dvfs [scpi_dvfs_get_opps] - new count 7, max_freq 1512000000
+---
+ drivers/amlogic/mailbox/scpi_protocol.c | 40 +++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/drivers/amlogic/mailbox/scpi_protocol.c b/drivers/amlogic/mailbox/scpi_protocol.c
+index 517b2d285913..f993a63402fb 100644
+--- a/drivers/amlogic/mailbox/scpi_protocol.c
++++ b/drivers/amlogic/mailbox/scpi_protocol.c
+@@ -86,6 +86,8 @@ static int high_priority_cmds[] = {
+ 	SCPI_CMD_WAKEUP_REASON_GET,
+ };
+ 
++static unsigned long max_freq_dvfs = 1500000000;
++
+ static struct scpi_opp *scpi_opps[MAX_DVFS_DOMAINS];
+ 
+ static int scpi_linux_errmap[SCPI_ERR_MAX] = {
+@@ -237,6 +239,7 @@ struct scpi_opp *scpi_dvfs_get_opps(u8 domain)
+ 	struct scpi_opp *opps;
+ 	size_t opps_sz;
+ 	int count, ret;
++	int i, max_count;
+ 
+ 	if (domain >= MAX_DVFS_DOMAINS)
+ 		return ERR_PTR(-EINVAL);
+@@ -255,6 +258,25 @@ struct scpi_opp *scpi_dvfs_get_opps(u8 domain)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	count = DVFS_OPP_COUNT(buf.header);
++	max_count = count;
++
++	if (max_freq_dvfs) {
++		for (i = 0; i < count; i++)	{
++			pr_info("dvfs [%s] - buf.opp[%d].freq_hz = %ld\n",
++				__func__, i, buf.opp[i].freq_hz);
++			if (buf.opp[i].freq_hz >= max_freq_dvfs)
++				break;
++		}
++		count = i + 1;
++		/* if no param "max_freq_dvfs or wrong "max_freq_dvfs"
++		 * from boot.ini, consider stable max value */
++		if ((max_freq_dvfs == 0) || (count > max_count))
++			count = max_count;
++
++		pr_info("dvfs [%s] - new count %d, max_freq %ld\n", __func__,
++			count, buf.opp[count - 1].freq_hz);
++	}
++
+ 	opps_sz = count * sizeof(*(opps->opp));
+ 
+ 	opps->count = count;
+@@ -506,3 +528,21 @@ int scpi_get_wakeup_reason(u32 *wakeup_reason)
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(scpi_get_wakeup_reason);
++
++static int __init get_max_freq(char *str)
++{
++	int ret;
++
++	if (NULL == str)
++		return -EINVAL;
++
++	ret = kstrtoul(str, 0, &max_freq_dvfs);
++
++	/* in unit Hz */
++	max_freq_dvfs *= 1000000;
++
++	pr_info("dvfs [%s] - max_freq : %ld\n", __func__, max_freq_dvfs);
++
++	return 0;
++}
++__setup("max_freq=", get_max_freq);
