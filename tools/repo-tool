@@ -130,7 +130,9 @@ build() {
       if [ "$PKG_IS_ADDON" = "yes" ] ; then
         ADDON=$PKG_NAME
         if listcontains "peripheral.steamcontroller adsp.biquad.filters screensaver.shadertoy visualization.wavforhue
-                         game.libretro.mrboom game.libretro.nestopia adsp.basic peripheral.xarcade" "$ADDON"; then
+                         game.libretro.mrboom game.libretro.nestopia adsp.basic peripheral.xarcade audioencoder.lame
+                         audioencoder.wav steamcontroller pvr.octonet audioencoder.vorbis audioencoder.flac
+                         pvr.mythtv" "$ADDON"; then
           echo "*** ERROR: PACKAGE $ADDON IS BROKEN, SKIPING ***"
           break
         else
