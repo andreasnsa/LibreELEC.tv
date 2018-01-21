@@ -6,3 +6,9 @@
 
   # Amlogic Meson SOC family (8 / 6 / gxbb)
     MESON_FAMILY="gxm"
+
+  # additional drivers to install:
+  # for a list of additinoal drivers see packages/linux-drivers
+  # Space separated list is supported,
+  # e.g. ADDITIONAL_DRIVERS="DRIVER1 DRIVER2"
+    ADDITIONAL_DRIVERS="$ADDITIONAL_DRIVERS fd628-aml"
