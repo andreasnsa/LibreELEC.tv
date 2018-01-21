@@ -1,23 +1,60 @@
-diff --git a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-index 8f32d8d..e3218bd 100644
---- a/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-+++ b/xbmc/cores/VideoPlayer/DVDCodecs/Video/DVDVideoCodecAmlogic.cpp
-@@ -33,6 +33,8 @@
- #include "settings/Settings.h"
- #include "settings/AdvancedSettings.h"
- #include "threads/Thread.h"
-+#include "guilib/GUIWindowManager.h"
-+#include "GUIUserMessages.h"
+diff --git a/xbmc/Application.cpp b/xbmc/Application.cpp
+index 272a517..7686185 100644
+--- a/xbmc/Application.cpp
++++ b/xbmc/Application.cpp
+@@ -3425,6 +3425,7 @@ void CApplication::OnPlayBackSeekChapter(int iChapter)
  
- #define __MODULE_NAME__ "DVDVideoCodecAmlogic"
+ void CApplication::OnAVChange()
+ {
++  CStereoscopicsManager::GetInstance().OnStreamChange();
+ }
  
-@@ -392,6 +394,8 @@ bool CDVDVideoCodecAmlogic::AddData(const DemuxPacket &packet)
-       m_videoBufferPool = std::shared_ptr<CAMLVideoBufferPool>(new CAMLVideoBufferPool());
+ void CApplication::RequestVideoSettings(const CFileItem &fileItem)
+diff --git a/xbmc/guilib/StereoscopicsManager.cpp b/xbmc/guilib/StereoscopicsManager.cpp
+index eac9642..b7839b8 100644
+--- a/xbmc/guilib/StereoscopicsManager.cpp
++++ b/xbmc/guilib/StereoscopicsManager.cpp
+@@ -392,16 +392,8 @@ void CStereoscopicsManager::OnSettingChanged(std::shared_ptr<const CSetting> set
  
-       m_opened = true;
-+      CGUIMessage msg(GUI_MSG_PLAYBACK_STARTED, 0, 0);
-+      g_windowManager.SendThreadMessage(msg);
-     }
-   }
+ bool CStereoscopicsManager::OnMessage(CGUIMessage &message)
+ {
+-  switch (message.GetMessage())
+-  {
+-  case GUI_MSG_PLAYBACK_STARTED:
+-    OnPlaybackStarted();
+-    break;
+-  case GUI_MSG_PLAYBACK_STOPPED:
+-  case GUI_MSG_PLAYLISTPLAYER_STOPPED:
++  if (message.GetMessage() == GUI_MSG_PLAYBACK_STOPPED || message.GetMessage() == GUI_MSG_PLAYLISTPLAYER_STOPPED)
+     OnPlaybackStopped();
+-    break;
+-  }
  
+   return false;
+ }
+@@ -516,7 +508,7 @@ bool CStereoscopicsManager::IsVideoStereoscopic()
+   return !mode.empty() && mode != "mono";
+ }
+ 
+-void CStereoscopicsManager::OnPlaybackStarted(void)
++void CStereoscopicsManager::OnStreamChange(void)
+ {
+   STEREOSCOPIC_PLAYBACK_MODE playbackMode = (STEREOSCOPIC_PLAYBACK_MODE) CServiceBroker::GetSettings().GetInt(CSettings::SETTING_VIDEOPLAYER_STEREOSCOPICPLAYBACKMODE);
+   RENDER_STEREO_MODE mode = GetStereoMode();
+diff --git a/xbmc/guilib/StereoscopicsManager.h b/xbmc/guilib/StereoscopicsManager.h
+index 4d49784..15bc989 100644
+--- a/xbmc/guilib/StereoscopicsManager.h
++++ b/xbmc/guilib/StereoscopicsManager.h
+@@ -87,10 +87,10 @@ public:
+    * @return True if action could be handled, false otherwise.
+    */
+   bool OnAction(const CAction &action);
++  void OnStreamChange(void);
+ 
+ private:
+   void ApplyStereoMode(const RENDER_STEREO_MODE &mode, bool notify = true);
+-  void OnPlaybackStarted(void);
+   void OnPlaybackStopped(void);
+   std::string GetVideoStereoMode();
+   bool IsVideoStereoscopic();
 --
