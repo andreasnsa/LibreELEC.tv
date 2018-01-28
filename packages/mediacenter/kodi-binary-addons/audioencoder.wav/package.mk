@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="audioencoder.wav"
-PKG_VERSION="2700ba0"
-PKG_SHA256="6886235c65e9208b27b9a66ed82a8bb91b2f3c35d1d58abe821ade4d27c70342"
-PKG_REV="2"
+PKG_VERSION="10cc651"
+PKG_SHA256="18ff0c0862ad9e9eabcd6d6d2b9e51a45e738104e6bf6c9f69d0abbd594a65b2"
+PKG_REV="3"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="http://www.kodi.tv"
