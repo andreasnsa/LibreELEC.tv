@@ -47,7 +47,7 @@ pre_make_target() {
 
 make_target() {
   cp -RP $(get_build_dir media_tree)/* $PKG_BUILD/linux
-  make VER=$KERNEL_VER SRCDIR=$(kernel_path) stagingconfig
+  make VER=$KERNEL_VER SRCDIR=$(kernel_path) WETEKSRCDIR=$(get_build_dir wetekdvb) stagingconfig
 
   # hack to workaround media_build bug
   if [ $LINUX = "amlogic-3.14" -o $LINUX = "amlogic-3.10" ]; then

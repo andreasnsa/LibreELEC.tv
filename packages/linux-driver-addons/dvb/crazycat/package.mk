@@ -45,7 +45,7 @@ pre_make_target() {
 }
 
 make_target() {
-  make SRCDIR=$(kernel_path) untar
+  make SRCDIR=$(kernel_path) WETEKSRCDIR=$(get_build_dir wetekdvb) untar
 
   # copy config file
   if [ "$PROJECT" = Generic ]; then
