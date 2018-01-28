@@ -141,8 +141,6 @@ build() {
       fi
       )
     done
-    PROJECT=$PROJECT DEVICE=$DEVICE ARCH=$ARCH ./scripts/create_addon crazycat
-    PROJECT=$PROJECT DEVICE=$DEVICE ARCH=$ARCH ./scripts/create_addon hauppauge
   done
 }
 
