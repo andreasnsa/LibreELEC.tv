@@ -2,11 +2,14 @@ diff --git a/drivers/media/Makefile b/drivers/media/Makefile
 index d87ccb8..e30c645 100644
 --- a/drivers/media/Makefile
 +++ b/drivers/media/Makefile
-@@ -35,3 +35,4 @@ obj-y += rc/
- obj-$(CONFIG_VIDEO_DEV) += radio/
- 
+@@ -36,6 +36,7 @@ obj-y += rc/
+ # Finally, merge the drivers that require the core
+ #
  obj-y += amlogic/
 +obj-y += dvb-avl/
+
+ obj-y += common/ platform/ pci/ usb/ mmc/ firewire/ spi/
+ obj-$(CONFIG_VIDEO_DEV) += radio/
 --- a/drivers/media/dvb-avl/aml_dmx.c	2017-12-10 19:34:57.000000000 +0100
 +++ b/drivers/media/dvb-avl/aml_dmx.c	2017-12-12 12:55:21.255063140 +0100
 @@ -547,7 +547,7 @@
