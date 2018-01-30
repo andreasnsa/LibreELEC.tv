@@ -9,11 +9,14 @@
  endif # MEDIA_SUPPORT
 --- a/drivers/media/Makefile
 +++ b/drivers/media/Makefile
-@@ -39,3 +39,4 @@ obj-y += rc/
+@@ -35,6 +35,7 @@ obj-y += rc/
+ #
+ # Finally, merge the drivers that require the core
+ #
++obj-y += amlogic/
+
  obj-y += common/ platform/ pci/ usb/ mmc/ firewire/ spi/
  obj-$(CONFIG_VIDEO_DEV) += radio/
- 
-+obj-y += amlogic/
 --- /dev/null
 +++ b/drivers/media/amlogic/Kconfig
 @@ -0,0 +1,8 @@

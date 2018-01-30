@@ -16,21 +16,16 @@
 #  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-PKG_NAME="dvb_tv-aml"
-PKG_VERSION="690f930"
-PKG_SHA256="78dae7eb253f36978f9e2d3be37923e6bd64ddddfebcfb63c6b997e51b6e36e3"
-PKG_REV="1"
+PKG_NAME="avl6862-aml"
+PKG_VERSION=""
 PKG_ARCH="arm aarch64"
 PKG_LICENSE="GPL"
-PKG_SITE="https://github.com/afl1/dvb_tv-aml"
-PKG_URL="$PKG_SITE/archive/$PKG_VERSION.tar.gz"
-PKG_SOURCE_DIR="$PKG_NAME-$PKG_VERSION*"
+PKG_SITE="https://libreelec.tv"
+PKG_URL=""
 PKG_DEPENDS_TARGET="toolchain"
-PKG_SECTION="driver"
-PKG_SHORTDESC="dvb_tv-aml: Internal DVB tuner driver for Amlogic devices developed by afl1"
-PKG_LONGDESC="dvb_tv-aml: Internal DVB tuner driver for Amlogic devices developed by afl1"
-PKG_TOOLCHAIN="manual"
-PKG_IS_KERNEL_PKG="yes"
+PKG_SECTION="virtual"
+PKG_SHORTDESC="avl6862-aml: Internal DVB tuner driver for Amlogic devices developed by afl1"
+PKG_LONGDESC="avl6862-aml: Internal DVB tuner driver for Amlogic devices developed by afl1"
 
 post_install() {
   enable_service amlogic-dvb.service

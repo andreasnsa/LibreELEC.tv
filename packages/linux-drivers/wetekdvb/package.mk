@@ -33,7 +33,7 @@ PKG_TOOLCHAIN="manual"
 
 makeinstall_target() {
   mkdir -p $INSTALL/$(get_full_module_dir)/$PKG_NAME
-  if [ $PROJECT = "WeTek_Play_2" ]; then
+  if [ $PROJECT = "WeTek_Play_2" -o  $DEVICE = "S905" ]; then
     cp driver/wetekdvb_play2.ko $INSTALL/$(get_full_module_dir)/$PKG_NAME/wetekdvb.ko
   else
     cp driver/wetekdvb.ko $INSTALL/$(get_full_module_dir)/$PKG_NAME
@@ -41,4 +41,8 @@ makeinstall_target() {
 
   mkdir -p $INSTALL/$(get_full_firmware_dir)
     cp firmware/* $INSTALL/$(get_full_firmware_dir)
+}
+
+post_install() {
+    enable_service wetekdvb.service
 }
