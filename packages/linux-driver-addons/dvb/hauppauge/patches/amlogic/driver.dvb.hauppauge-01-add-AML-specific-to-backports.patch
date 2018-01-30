@@ -8,7 +8,7 @@
 +add linux-302-AML-amlogic-video-dev.patch
 +add linux-303-AML-meson-ir.patch
 +add linux-305-AML-dmx_h.patch
-+add linux-306-AML-build-dvb-aml.patch
++add linux-306-AML-build-dvb-avl.patch
  add api_version.patch
  add pr_fmt.patch
  add debug.patch
