@@ -39,8 +39,8 @@ case "$LINUX" in
     PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET aml-dtbtools:host"
     ;;
   amlogic-3.14)
-    PKG_VERSION="b489e8d"
-    PKG_SHA256="4b8252f8c5f4e056c3269b1031bded1ce0cebb5980328fdfd91d8d59dac9ccfe"
+    PKG_VERSION="42a944b3"
+#    PKG_SHA256="4b8252f8c5f4e056c3269b1031bded1ce0cebb5980328fdfd91d8d59dac9ccfe"
     PKG_URL="https://github.com/LibreELEC-AML/linux-amlogic/archive/$PKG_VERSION.tar.gz"
     PKG_SOURCE_DIR="$PKG_NAME-amlogic-$PKG_VERSION*"
     PKG_PATCH_DIRS="amlogic-3.14"
@@ -73,22 +73,9 @@ if [ "$BUILD_ANDROID_BOOTIMG" = "yes" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET mkbootimg:host"
 fi
 
-if [ "$PROJECT" = "Amlogic" ]; then
-  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET dvb_tv-aml"
+if [ "$DEVICE" = "S905" -o "$DEVICE" = "S912" ]; then
+  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET avl6862-aml"
 fi
-
-post_unpack() {
-
-  # Amlogic DVB driver
-  if [ "$PROJECT" = "Amlogic" ]; then
-    scripts/unpack dvb_tv-aml
-    DVB_TV_AML_DIR="$(get_build_dir dvb_tv-aml)"
-    if [ -d "$DVB_TV_AML_DIR" ]; then
-      cp -a "$DVB_TV_AML_DIR" "$PKG_BUILD/drivers/media/dvb_tv"
-      echo "obj-y += dvb_tv/" >> "$PKG_BUILD/drivers/media/Makefile"
-    fi
-  fi
-}
 
 post_patch() {
   CFG_FILE="$PKG_NAME.${TARGET_PATCH_ARCH:-$TARGET_ARCH}.conf"
@@ -280,12 +267,13 @@ post_install() {
   # WeTek DVB driver
   if listcontains "$ADDITIONAL_DRIVERS" "wetekdvb"; then
     WETEKDVB_DIR="$(get_build_dir wetekdvb)"
-    if [ -d "$WETEKDVB_DIR" -a -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/dvb_tv/wetekplay.ko" ]; then
+    if [ -d "$WETEKDVB_DIR" -a -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/wetek/wetekplay.ko" ]; then
       cp -a "$WETEKDVB_DIR/wetekdvb.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/"
-      mv -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/dvb_tv/wetekplay.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/wetekplay.ko"
+      mv -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/wetek/wetekplay.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/wetekplay.ko"
     fi
   fi
 
   # bluez looks in /etc/firmware/
     ln -sf /$(get_full_firmware_dir)/ $INSTALL/etc/firmware
 }
+
