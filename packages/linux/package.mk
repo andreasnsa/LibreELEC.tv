@@ -73,10 +73,6 @@ if [ "$BUILD_ANDROID_BOOTIMG" = "yes" ]; then
   PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET mkbootimg:host"
 fi
 
-if [ "$DEVICE" = "S905" -o "$DEVICE" = "S912" ]; then
-  PKG_DEPENDS_TARGET="$PKG_DEPENDS_TARGET avl6862-aml"
-fi
-
 post_patch() {
   CFG_FILE="$PKG_NAME.${TARGET_PATCH_ARCH:-$TARGET_ARCH}.conf"
   if [ -n "$DEVICE" -a -f $PROJECT_DIR/$PROJECT/devices/$DEVICE/$PKG_NAME/$PKG_VERSION/$CFG_FILE ]; then
@@ -136,6 +132,16 @@ post_patch() {
     sed -i -e "s|^CONFIG_ISCSI_BOOT_SYSFS=.*$|# CONFIG_ISCSI_BOOT_SYSFS is not set|" $PKG_BUILD/.config
     sed -i -e "s|^CONFIG_ISCSI_IBFT_FIND=.*$|# CONFIG_ISCSI_IBFT_FIND is not set|" $PKG_BUILD/.config
     sed -i -e "s|^CONFIG_ISCSI_IBFT=.*$|# CONFIG_ISCSI_IBFT is not set|" $PKG_BUILD/.config
+  fi
+
+  # avl6862-aml DVB driver
+  if listcontains "$ADDITIONAL_DRIVERS" "avl6862-aml"; then
+    sed -i -e "s|^# CONFIG_AVL6862 is not set$|CONFIG_AVL6862=m|" $PKG_BUILD/.config
+  fi
+
+  # WeTek DVB driver
+  if listcontains "$ADDITIONAL_DRIVERS" "wetekdvb"; then
+    sed -i -e "s|^# CONFIG_WETEK is not set$|CONFIG_WETEK=m|" $PKG_BUILD/.config
   fi
 
   # install extra dts files

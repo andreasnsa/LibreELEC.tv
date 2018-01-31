@@ -54,7 +54,7 @@ unpack() {
     cp -a "$(kernel_path)/include/media/videobuf-res.h" "$PKG_BUILD/include/media/"
   fi
 
-  if [ $DEVICE = "S905" -o $DEVICE = "S912" ]; then
+  if listcontains "$ADDITIONAL_DRIVERS" "avl6862-aml"; then
     mkdir -p  "$PKG_BUILD/drivers/media/dvb-avl/"
     # Copy avl6862 driver
     cp -a $(kernel_path)/drivers/amlogic/dvb-avl "$PKG_BUILD/drivers/media/"
