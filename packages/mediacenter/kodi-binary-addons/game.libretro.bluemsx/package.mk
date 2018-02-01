@@ -19,7 +19,7 @@
 PKG_NAME="game.libretro.bluemsx"
 PKG_VERSION="e10bf33"
 PKG_SHA256="3f1c885eab212367c1b1bcdf73bfb9e7bf5ea6cb2eb7c46bbd495332f97e583d"
-PKG_REV="105"
+PKG_REV="106"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kodi-game/game.libretro.bluemsx"

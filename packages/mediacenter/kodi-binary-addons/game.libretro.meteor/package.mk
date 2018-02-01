@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="game.libretro.meteor"
-PKG_VERSION="c37d3e6"
-PKG_SHA256="65ee9cd9e222c0eb904ffdae543dddb3395f2503a702145758c797b7661dea71"
-PKG_REV="103"
+PKG_VERSION="cd1cc9f"
+PKG_SHA256="bbf4670b7d5468ed0eff845337c617ef3037a106994ba8cb5471578fb00ce344"
+PKG_REV="104"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kodi-game/game.libretro.meteor"

@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="game.libretro.picodrive"
-PKG_VERSION="78e46a2"
-PKG_SHA256="67e0a452be2f05ca34e3396bba8d2abbb2e72932fb2988672a09fd68283dedd2"
-PKG_REV="106"
+PKG_VERSION="8dc8e50"
+PKG_SHA256="a8d0888a9b83e9cc1e13ccd09486fb1e50ad3950f730fd0892b24f17fb961f1a"
+PKG_REV="107"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kodi-game/game.libretro.picodrive"

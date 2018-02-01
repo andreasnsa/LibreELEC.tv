@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="game.libretro.beetle-pce-fast"
-PKG_VERSION="411d954"
-PKG_SHA256="67745121a4377eda414f3dd7f045a80e5184deb8d42caad8ecc2e99983d6d647"
-PKG_REV="107"
+PKG_VERSION="f907f40"
+PKG_SHA256="851aa13ae7ca7a596f02572964a40ba93b6fc72f84ebb5e6a5aac06f00bf28f6"
+PKG_REV="108"
 PKG_ARCH="any"
 PKG_LICENSE="GPL"
 PKG_SITE="https://github.com/kodi-game/game.libretro.beetle-pce-fast"

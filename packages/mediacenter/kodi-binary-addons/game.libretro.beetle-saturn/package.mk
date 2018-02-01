@@ -17,9 +17,9 @@
 ################################################################################
 
 PKG_NAME="game.libretro.beetle-saturn"
-PKG_VERSION="72999fb"
-PKG_SHA256="8be901699b8d663b720e0a690b61879382e52eba5cc044625cdbe9850bc4d651"
-PKG_REV="106"
+PKG_VERSION="c9966d1"
+PKG_SHA256="9d4ee0cd8f12b4e15edfe7d641ad8c7032b7e3f610d7f32d828b06e9e232dad4"
+PKG_REV="107"
 # no openGL suport in retroplayer yet
 PKG_ARCH="none"
 PKG_LICENSE="GPL"
