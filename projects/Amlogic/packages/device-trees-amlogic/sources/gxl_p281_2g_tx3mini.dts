@@ -1,4 +1,4 @@
-#include "gxl_p231_2g.dts"
+#include "gxl_p212_2g.dts"
 
 / {
 	le-dt-id = "gxl_p281_2g_tx3mini";
