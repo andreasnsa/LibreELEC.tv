@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="device-trees-amlogic"
-PKG_VERSION="68267ba"
-PKG_SHA256="45a014e2dd9c6b69e06bd980e467925ae36208017d9ef16dde4a58e47f830c94"
+PKG_VERSION="16ea52b"
+PKG_SHA256="7cec039aea42f10a04518fa096004567fcfa5c2201cf50fd5437514e1635032b"
 PKG_LICENSE="GPL"
 PKG_URL="https://github.com/LibreELEC/device-trees-amlogic/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"
@@ -43,9 +43,9 @@ make_target() {
   popd > /dev/null
 
   # Copy all device trees to kernel source folder and create a list
+  cp -f $PKG_BUILD/*.dts* arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/
   for f in $PKG_BUILD/*.dts; do
     DTB_NAME="$(basename $f .dts).dtb"
-    cp -f $f arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/
     DTB_LIST="$DTB_LIST $DTB_NAME"
   done
 
