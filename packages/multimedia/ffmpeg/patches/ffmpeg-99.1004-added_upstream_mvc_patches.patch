@@ -1,7 +1,7 @@
-From 9699f168d2b55d12a00d11c4d99eea9f6b39a4e3 Mon Sep 17 00:00:00 2001
+From e75d7807cc97b3ddd8d8f6fe2fcf3dc4de58863f Mon Sep 17 00:00:00 2001
 From: Hendrik Leppkes <h.leppkes@gmail.com>
 Date: Sat, 9 Jan 2016 16:34:09 +0100
-Subject: [PATCH 1/3] avcodec: add h264_mvc codec id and profiles
+Subject: [PATCH 1/4] avcodec: add h264_mvc codec id and profiles
 
 ---
  libavcodec/avcodec.h    | 3 +++
@@ -32,7 +32,7 @@ index 6c4b011b5c..8f1f5a3e53 100644
  #define FF_PROFILE_VC1_SIMPLE   0
  #define FF_PROFILE_VC1_MAIN     1
 diff --git a/libavcodec/codec_desc.c b/libavcodec/codec_desc.c
-index 6a13bbbf0e..03ae4838d2 100644
+index 478b7c0ffc..ff10f3b2bc 100644
 --- a/libavcodec/codec_desc.c
 +++ b/libavcodec/codec_desc.c
 @@ -1665,6 +1665,13 @@ static const AVCodecDescriptor codec_descriptors[] = {
@@ -78,10 +78,10 @@ index 53cbcfb543..f93f06fcfb 100644
 2.14.1
 
 
-From 336762113945952ca59a03a0970754ec6b347580 Mon Sep 17 00:00:00 2001
+From 51f6cec0b87840c32482df5d2b09f50d503d2b2b Mon Sep 17 00:00:00 2001
 From: Hendrik Leppkes <h.leppkes@gmail.com>
 Date: Sat, 9 Jan 2016 16:34:40 +0100
-Subject: [PATCH 2/3] h264_parser: add support for parsing h264 mvc NALUs
+Subject: [PATCH 2/4] h264_parser: add support for parsing h264 mvc NALUs
 
 ---
  libavcodec/allcodecs.c   |  1 +
@@ -195,10 +195,10 @@ index dd0a965af0..855c74896e 100644
 2.14.1
 
 
-From cd8d99a650351d4dbfc2b2cfdea8c8c937833bb8 Mon Sep 17 00:00:00 2001
+From 6edab559331e83ad11e7940233dbbaae121e528c Mon Sep 17 00:00:00 2001
 From: Hendrik Leppkes <h.leppkes@gmail.com>
 Date: Tue, 28 Nov 2017 16:12:12 +0000
-Subject: [PATCH 3/3] h264_parser: force grabing a new timestamp until a frame
+Subject: [PATCH 3/4] h264_parser: force grabing a new timestamp until a frame
  start was found
 
 ---
@@ -219,6 +219,65 @@ index 855c74896e..90a99a19a8 100644
          if (ff_combine_frame(pc, next, &buf, &buf_size) < 0) {
              *poutbuf      = NULL;
              *poutbuf_size = 0;
+-- 
+2.14.1
+
+
+From 2263d8d3a16ccf886c3692597331779a726373b5 Mon Sep 17 00:00:00 2001
+From: popcornmix <popcornmix@gmail.com>
+Date: Sun, 21 Jan 2018 20:31:31 +0000
+Subject: [PATCH 4/4] fixup
+
+---
+ libavcodec/extract_extradata_bsf.c | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/libavcodec/extract_extradata_bsf.c b/libavcodec/extract_extradata_bsf.c
+index ed6509c681..188e62a42d 100644
+--- a/libavcodec/extract_extradata_bsf.c
++++ b/libavcodec/extract_extradata_bsf.c
+@@ -56,7 +56,7 @@ static int extract_extradata_h2645(AVBSFContext *ctx, AVPacket *pkt,
+         HEVC_NAL_VPS, HEVC_NAL_SPS, HEVC_NAL_PPS,
+     };
+     static const int extradata_nal_types_h264[] = {
+-        H264_NAL_SPS, H264_NAL_PPS,
++        H264_NAL_SPS, H264_NAL_SPS_SUBSET, H264_NAL_PPS,
+     };
+ 
+     ExtractExtradataContext *s = ctx->priv_data;
+@@ -88,14 +88,14 @@ static int extract_extradata_h2645(AVBSFContext *ctx, AVPacket *pkt,
+                 if (nal->type == HEVC_NAL_SPS) has_sps = 1;
+                 if (nal->type == HEVC_NAL_VPS) has_vps = 1;
+             } else {
+-                if (nal->type == H264_NAL_SPS) has_sps = 1;
++                if (nal->type == H264_NAL_SPS || nal->type == H264_NAL_SPS_SUBSET) has_sps = 1;
+             }
+         }
+     }
+ 
+     if (extradata_size &&
+         ((ctx->par_in->codec_id == AV_CODEC_ID_HEVC && has_sps && has_vps) ||
+-         (ctx->par_in->codec_id == AV_CODEC_ID_H264 && has_sps))) {
++         ((ctx->par_in->codec_id == AV_CODEC_ID_H264 || ctx->par_in->codec_id == AV_CODEC_ID_H264_MVC) && has_sps))) {
+         AVBufferRef *filtered_buf;
+         uint8_t *extradata, *filtered_data;
+ 
+@@ -247,6 +247,7 @@ static const struct {
+ } extract_tab[] = {
+     { AV_CODEC_ID_CAVS,       extract_extradata_mpeg4   },
+     { AV_CODEC_ID_H264,       extract_extradata_h2645   },
++    { AV_CODEC_ID_H264_MVC,   extract_extradata_h2645   },
+     { AV_CODEC_ID_HEVC,       extract_extradata_h2645   },
+     { AV_CODEC_ID_MPEG1VIDEO, extract_extradata_mpeg12  },
+     { AV_CODEC_ID_MPEG2VIDEO, extract_extradata_mpeg12  },
+@@ -306,6 +307,7 @@ fail:
+ static const enum AVCodecID codec_ids[] = {
+     AV_CODEC_ID_CAVS,
+     AV_CODEC_ID_H264,
++    AV_CODEC_ID_H264_MVC,
+     AV_CODEC_ID_HEVC,
+     AV_CODEC_ID_MPEG1VIDEO,
+     AV_CODEC_ID_MPEG2VIDEO,
 -- 
 2.14.1
 

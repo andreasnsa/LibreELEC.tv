@@ -1,4 +1,4 @@
-From 453ef529bccff5946ddbba0538dea18f5f2b72c0 Mon Sep 17 00:00:00 2001
+From d8bdcc8791c501921ee8961f3b0de0bd47668ebf Mon Sep 17 00:00:00 2001
 From: popcornmix <popcornmix@gmail.com>
 Date: Fri, 5 Jun 2015 22:48:33 +0100
 Subject: [PATCH] mpeg4video: Signal unsupported GMC with more than one warp
