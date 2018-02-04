@@ -66,47 +66,6 @@ index f5d5e33..c298b41 100644
    return true;
  }
  
-@@ -803,29 +803,3 @@ void aml_disable_freeScale()
-   SysfsUtils::SetInt("/sys/class/graphics/fb1/free_scale", 0);
- }
- 
--void aml_set_framebuffer_resolution(const RESOLUTION_INFO &res, std::string framebuffer_name)
--{
--  aml_set_framebuffer_resolution(res.iScreenWidth, res.iScreenHeight, framebuffer_name);
--}
--
--void aml_set_framebuffer_resolution(int width, int height, std::string framebuffer_name)
--{
--  int fd0;
--  std::string framebuffer = "/dev/" + framebuffer_name;
--
--  if ((fd0 = open(framebuffer.c_str(), O_RDWR)) >= 0)
--  {
--    struct fb_var_screeninfo vinfo;
--    if (ioctl(fd0, FBIOGET_VSCREENINFO, &vinfo) == 0)
--    {
--      vinfo.xres = width;
--      vinfo.yres = height;
--      vinfo.xres_virtual = 1920;
--      vinfo.yres_virtual = 2160;
--      vinfo.bits_per_pixel = 32;
--      vinfo.activate = FB_ACTIVATE_ALL;
--      ioctl(fd0, FBIOPUT_VSCREENINFO, &vinfo);
--    }
--    close(fd0);
--  }
--}
-diff --git a/xbmc/utils/AMLUtils.h b/xbmc/utils/AMLUtils.h
-index 3246a7f..4f11373 100644
---- a/xbmc/utils/AMLUtils.h
-+++ b/xbmc/utils/AMLUtils.h
-@@ -74,6 +74,4 @@ void aml_handle_scale(const RESOLUTION_INFO &res);
- void aml_handle_display_stereo_mode(const int stereo_mode);
- void aml_enable_freeScale(const RESOLUTION_INFO &res);
- void aml_disable_freeScale();
--void aml_set_framebuffer_resolution(const RESOLUTION_INFO &res, std::string framebuffer_name);
--void aml_set_framebuffer_resolution(int width, int height, std::string framebuffer_name);
- 
 -- 
 2.13.3
 

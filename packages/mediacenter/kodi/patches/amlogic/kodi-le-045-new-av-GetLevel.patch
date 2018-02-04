@@ -8,10 +8,9 @@
  
  protected:
  
-@@ -114,6 +115,8 @@
+@@ -114,5 +115,7 @@
    void CalcFrameRate();
    int CalcDropRequirement(double pts);
-   std::string GetStereoMode();
 +  void SetLevel(){ m_processInfo.SetLevelVQ((m_pts == DVD_NOPTS_VALUE) || (m_pts < m_pClock->GetClock() + 80000) ?
 +                     m_messageQueue.GetLevel() : m_messageQueue.GetLevel() + int((m_pts - m_pClock->GetClock() - 80000) / 80000));}
  
