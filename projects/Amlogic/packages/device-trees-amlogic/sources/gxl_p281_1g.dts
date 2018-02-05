@@ -1,0 +1,6 @@
+#include "gxl_p212_1g.dts"
+
+/ {
+	le-dt-id = "gxl_p281_1g";
+
+};
