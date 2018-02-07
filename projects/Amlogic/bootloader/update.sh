@@ -100,6 +100,7 @@ for arg in $(cat /proc/cmdline); do
 done
 
 if [ -d $BOOT_ROOT/device_trees ]; then
+  mount -o rw,remount $BOOT_ROOT
   rm $BOOT_ROOT/device_trees/*.dtb
   cp -p $SYSTEM_ROOT/usr/share/bootloader/*.dtb $BOOT_ROOT/device_trees/
 fi

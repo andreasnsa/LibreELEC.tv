@@ -30,17 +30,10 @@ make_target() {
   pushd $BUILD/linux-$(kernel_version) > /dev/null
 
   # Device trees already present in kernel tree we want to include
-  EXTRA_TREES=(gxbb_p201.dtb gxl_p212_1g.dtb gxl_p212_2g.dtb \
-               gxm_q200_2g.dtb gxm_q201_1g.dtb gxm_q201_2g.dtb)
-
-  # Add "le-dtb-id" and add trees to the list
-  pushd arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic > /dev/null
+  EXTRA_TREES=(gxbb_p201 gxl_p212_1g gxl_p212_2g gxm_q200_2g gxm_q201_1g gxm_q201_2g gxl_p281_1g )
   for f in ${EXTRA_TREES[@]}; do
-    LE_DT_ID="${f/.dtb/}"
-    echo -e "/ {\n\tle-dt-id = \"$LE_DT_ID\";\n};" >> "${f/.dtb/.dts}"
-    DTB_LIST="$DTB_LIST $f"
+    DTB_LIST="$DTB_LIST $f.dtb"
   done
-  popd > /dev/null
 
   # Copy all device trees to kernel source folder and create a list
   cp -f $PKG_BUILD/*.dts* arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/
@@ -49,8 +42,29 @@ make_target() {
     DTB_LIST="$DTB_LIST $DTB_NAME"
   done
 
+  # Filter device tree list depending on project
+  case "$DEVICE" in
+    S905)
+      for f in ${DTB_LIST[@]}; do
+        [[ "$f" == gxbb* ]] || [[ "$f" == gxl* ]] && DTB_LIST_FILTERED="$DTB_LIST_FILTERED $f"
+      done
+      ;;
+    S912)
+      for f in ${DTB_LIST[@]}; do
+        [[ "$f" == gxm* ]] && DTB_LIST_FILTERED="$DTB_LIST_FILTERED $f"
+      done
+      ;;
+    *)
+      for f in ${DTB_LIST[@]}; do
+        if listcontains "$KERNEL_UBOOT_EXTRA_TARGET" "$f"; then
+          DTB_LIST_FILTERED="$DTB_LIST_FILTERED $f"
+        fi
+      done
+      ;;
+  esac
+
   # Compile device trees
-  LDFLAGS="" make $DTB_LIST
+  LDFLAGS="" make $DTB_LIST_FILTERED
   mv arch/$TARGET_KERNEL_ARCH/boot/dts/amlogic/*.dtb $PKG_BUILD
 
   popd > /dev/null

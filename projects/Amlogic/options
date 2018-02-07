@@ -55,7 +55,7 @@
     KERNEL_MAKE_EXTRACMD=""
 
   # Additional kernel dependencies
-    KERNEL_EXTRA_DEPENDS_TARGET="device-trees-amlogic"
+    KERNEL_EXTRA_DEPENDS_TARGET=""
 
   # Kernel to use. values can be:
   # default:  default mainline kernel
