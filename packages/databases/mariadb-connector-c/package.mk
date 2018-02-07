@@ -1,6 +1,6 @@
 ################################################################################
 #      This file is part of LibreELEC - https://libreelec.tv
-#      Copyright (C) 2016-present Team LibreELEC
+#      Copyright (C) 2018-present Team LibreELEC
 #
 #  LibreELEC is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,23 +16,26 @@
 #  along with LibreELEC.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-PKG_NAME="w_scan"
-PKG_VERSION="20170107"
-PKG_SHA256="38e0f38a7bf06cff6d6ea01652ad4ee60da2cb0e937360468f936da785b46ffe"
+PKG_NAME="mariadb-connector-c"
+PKG_VERSION="3.0.2"
+PKG_SHA256="f44f436fc35e081db3a56516de9e3bb11ae96838e75d58910be28ddd2bc56d88"
 PKG_ARCH="any"
-PKG_LICENSE="GPL"
-PKG_SITE="http://wirbel.htpc-forum.de/w_scan/index2.html"
-PKG_URL="http://wirbel.htpc-forum.de/$PKG_NAME/$PKG_NAME-$PKG_VERSION.tar.bz2"
-PKG_DEPENDS_TARGET="toolchain"
-PKG_SECTION="tools"
-PKG_SHORTDESC="DVBlast is a small channel scan tool to create an channel.conf for VDR"
-PKG_LONGDESC="DVBlast is a small channel scan tool to create an channel.conf for VDR"
-PKG_TOOLCHAIN="autotools"
+PKG_LICENSE="LGPL"
+PKG_SITE="https://mariadb.org/"
+PKG_URL="https://github.com/MariaDB/mariadb-connector-c/archive/v$PKG_VERSION.tar.gz"
+PKG_DEPENDS_TARGET="toolchain zlib openssl"
+PKG_SECTION="database"
+PKG_SHORTDESC="mariadb-connector: library to conntect to mariadb/mysql database server"
+PKG_LONGDESC="mariadb-connector: library to conntect to mariadb/mysql database server"
 
-# aml 3.14 is meh
-pre_configure_target() {
-if [ $LINUX = "amlogic-3.14" -o $LINUX = "amlogic-3.10" ]; then
-  sed -i 's/DVB_HEADER=0/DVB_HEADER=1/g' $PKG_BUILD/configure*
-  sed -i 's/HAS_DVB_API5=0/HAS_DVB_API5=1/g' $PKG_BUILD/configure*
-fi
+PKG_CMAKE_OPTS_TARGET="-DWITH_EXTERNAL_ZLIB=ON
+                       -DAUTH_CLEARTEXT=STATIC
+                       -DAUTH_DIALOG=STATIC
+                       -DAUTH_OLDPASSWORD=STATIC
+                       -DREMOTEIO=OFF
+                      "
+
+post_makeinstall_target() {
+  # drop all unneeded
+  rm -rf $INSTALL/usr
 }
