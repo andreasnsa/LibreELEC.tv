@@ -48,7 +48,7 @@ make_target() {
   fi
 
   case $PKG_DEVICE_NAME in
-    RPi|RPi2|imx6)
+    RPi|RPi2)
       make -f Makefile.libretro platform=${PKG_DEVICE_NAME,,}
       ;;
     Generic)

@@ -17,8 +17,8 @@
 ################################################################################
 
 PKG_NAME="libretro-ppsspp"
-PKG_VERSION="9145287"
-PKG_SHA256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+PKG_VERSION="5f7bcf7"
+PKG_SHA256="09e61300c05705b1f98e1b575e44d366e5a243cc3be97b3a09ad420581459f87"
 PKG_ARCH="any"
 PKG_LICENSE="GPLv2"
 PKG_SITE="https://github.com/libretro/libretro-ppsspp"
@@ -27,6 +27,7 @@ PKG_DEPENDS_TARGET="toolchain kodi-platform"
 PKG_SECTION="emulation"
 PKG_SHORTDESC="A PSP emulator for Android, Windows, Mac, Linux and Blackberry 10, written in C++."
 PKG_LONGDESC="A PSP emulator for Android, Windows, Mac, Linux and Blackberry 10, written in C++."
+PKG_TOOLCHAIN="make"
 
 PKG_LIBNAME="ppsspp_libretro.so"
 PKG_LIBPATH="libretro/$PKG_LIBNAME"
@@ -51,7 +52,7 @@ make_target() {
     PKG_DEVICE_NAME=$DEVICE
   fi
   
-  if [ "$PKG_DEVICE_NAME" = "RPi" ] || [ "$PKG_DEVICE_NAME" = "imx6" ]; then
+  if [ "$PKG_DEVICE_NAME" = "RPi" ]; then
     make -C libretro platform=${DEVICE,,}
   else
     case $TARGET_CPU in
