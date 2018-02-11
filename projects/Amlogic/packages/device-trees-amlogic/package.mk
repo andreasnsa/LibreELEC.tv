@@ -17,10 +17,10 @@
 ################################################################################
 
 PKG_NAME="device-trees-amlogic"
-PKG_VERSION="8a3cfc7"
-PKG_SHA256="377e43f346680ae93bb08120fefaa291ce9e4e7cc2947aae0aeba674d46674b8"
+PKG_VERSION="d5cc5da"
+PKG_SHA256="fe7f151fd87cc03c173616c467f2502fdbe01cdcc4ac121d788d2104eb2cef27"
 PKG_LICENSE="GPL"
-PKG_URL="https://github.com/LibreELEC/device-trees-amlogic/archive/$PKG_VERSION.tar.gz"
+PKG_URL="https://github.com/LibreELEC-AML/device-trees-amlogic/archive/$PKG_VERSION.tar.gz"
 PKG_DEPENDS_TARGET="toolchain"
 PKG_IS_KERNEL_PKG="yes"
 PKG_TOOLCHAIN="manual"
@@ -30,7 +30,7 @@ make_target() {
   pushd $BUILD/linux-$(kernel_version) > /dev/null
 
   # Device trees already present in kernel tree we want to include
-  EXTRA_TREES=(gxbb_p201 gxl_p212_1g gxl_p212_2g gxm_q200_2g gxm_q201_1g gxm_q201_2g gxl_p281_1g)
+  EXTRA_TREES=(gxbb_p201 gxl_p212_1g gxl_p212_2g gxm_q200_2g gxm_q201_1g gxm_q201_2g)
 
   # Add trees to the list
   for f in ${EXTRA_TREES[@]}; do
