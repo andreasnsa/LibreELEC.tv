@@ -120,6 +120,16 @@ post_patch() {
     sed -i -e "s|^CONFIG_ISCSI_IBFT=.*$|# CONFIG_ISCSI_IBFT is not set|" $PKG_BUILD/.config
   fi
 
+  # avl6862-aml DVB driver
+  if listcontains "$ADDITIONAL_DRIVERS" "avl6862-aml"; then
+    sed -i -e "s|^# CONFIG_AVL6862 is not set$|CONFIG_AVL6862=m|" $PKG_BUILD/.config
+  fi
+
+  # WeTek DVB driver
+  if listcontains "$ADDITIONAL_DRIVERS" "wetekdvb"; then
+    sed -i -e "s|^# CONFIG_WETEK is not set$|CONFIG_WETEK=m|" $PKG_BUILD/.config
+  fi
+
   # install extra dts files
   for f in $PROJECT_DIR/$PROJECT/config/*-overlay.dts; do
     [ -f "$f" ] && cp -v $f $PKG_BUILD/arch/$TARGET_KERNEL_ARCH/boot/dts/overlays || true
@@ -264,6 +274,15 @@ makeinstall_init() {
 post_install() {
   mkdir -p $INSTALL/$(get_full_firmware_dir)/
     ln -sf /storage/.config/firmware/ $INSTALL/$(get_full_firmware_dir)/updates
+
+  # WeTek DVB driver
+  if listcontains "$ADDITIONAL_DRIVERS" "wetekdvb"; then
+    WETEKDVB_DIR="$(get_build_dir wetekdvb)"
+    if [ -d "$WETEKDVB_DIR" -a -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/wetek/wetekplay.ko" ]; then
+      cp -a "$WETEKDVB_DIR/wetekdvb.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/"
+      mv -f "$INSTALL$(get_full_module_dir)/kernel/drivers/amlogic/wetek/wetekplay.ko" "$INSTALL$(get_full_module_dir)/kernel/drivers/media/dvb-core/wetekplay.ko"
+    fi
+  fi
 
   # bluez looks in /etc/firmware/
     ln -sf /$(get_full_firmware_dir)/ $INSTALL/etc/firmware

@@ -1,6 +1,6 @@
 --- a/linux/Makefile
 +++ b/linux/Makefile
-@@ -112,6 +112,13 @@
+@@ -112,6 +112,19 @@
  
  untar: linux-media.tar.bz2
  	tar xfj linux-media.tar.bz2
@@ -11,6 +11,13 @@
 +	# Copy videobuf-res module
 +	cp -a "$(SRCDIR)/drivers/media/v4l2-core/videobuf-res.c" "drivers/media/v4l2-core/"
 +	cp -a "$(SRCDIR)/include/media/videobuf-res.h" "include/media/"
++	mkdir -p  drivers/media/dvb-avl/
++	# Copy dvb_tv driver
++	cp -a $(SRCDIR)/drivers/amlogic/dvb-avl "drivers/media/"
++	@if [ $(WETEKSRCDIR) != "" ]; then cp -a $(SRCDIR)/drivers/amlogic/wetek/ "drivers/media/"; fi
++	@if [ $(WETEKSRCDIR) != "" ]; then cp -a $(WETEKSRCDIR)/driver/wetekdvb_play2.ko "../v4l/wetekdvb.ko"; fi
++	@if [ $(WETEKSRCDIR) != "" ]; then echo "obj-y += wetek/" >> "drivers/media/Makefile"; fi
  	-rm -f .patches_applied .linked_dir .git_log.md5
  
- clean:
+ clean:echo "obj-y += wetek/" >> "$PKG_BUILD/drivers/media/Makefile"
+
