@@ -58,6 +58,7 @@ unpack() {
     mkdir -p  "$PKG_BUILD/drivers/media/dvb-avl/"
     # Copy avl6862 driver
     cp -a $(kernel_path)/drivers/amlogic/dvb-avl "$PKG_BUILD/drivers/media/"
+    echo "obj-y += dvb-avl/" >> "$PKG_BUILD/drivers/media/Makefile"
   fi
   if listcontains "$ADDITIONAL_DRIVERS" "wetekdvb"; then
     # Copy wetek dvb driver
