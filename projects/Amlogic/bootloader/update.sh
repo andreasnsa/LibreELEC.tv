@@ -128,10 +128,3 @@ if [ -f $SYSTEM_ROOT/usr/share/bootloader/u-boot -a ! -e /dev/system -a ! -e /de
   dd if=$SYSTEM_ROOT/usr/share/bootloader/u-boot of=$BOOT_DISK conv=fsync bs=1 count=112 status=none
   dd if=$SYSTEM_ROOT/usr/share/bootloader/u-boot of=$BOOT_DISK conv=fsync bs=512 skip=1 seek=1 status=none
 fi
-
-## bugfix for upgrade from 8.90.3 > .4
-## remove in the future
-for i in /storage/.kodi/addons/driver.dvb.*; do
-  echo "*** removing $i ***"
-  rm -rf $i
-done
